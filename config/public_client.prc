@@ -23,7 +23,7 @@ want-smooth-animations #f
 
 
 # Resource settings
-model-path /c/Users/Ryan/Desktop/GitHub/TTR-Private/resources
+model-path /c/Users/ryand/OneDrive/Desktop/GitHubStuff/TTPorkheffley/resources
 model-cache-models #f
 model-cache-textures #f
 vfs-mount phase_3.mf /

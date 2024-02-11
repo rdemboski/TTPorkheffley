@@ -3,9 +3,9 @@
 # as well as deployment/server.prc if necessary.
 
 # Client settings
-window-title Toontown Rewritten [DEV BUILD]
-server-version ttrp-beta-v2.11.4
-sync-video #f
+window-title Toontown Porkheffley
+server-version ttporkheffley-v1.0.0
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -16,7 +16,7 @@ default-directnotify-level info
 
 # New Addons!
 want-WASD #t
-tt-framerate #t
+tt-framerate #f
 want-new-toonhall #t
 want-max-font #t
 
@@ -35,7 +35,8 @@ vfs-mount resources/phase_10 /phase_10
 vfs-mount resources/phase_11 /phase_11
 vfs-mount resources/phase_12 /phase_12
 vfs-mount resources/phase_13 /phase_13
-model-path /c/Users/Ryan/Desktop/GitHub/TTR-Private/resources
+vfs-mount resources/custom /custom
+model-path /c/Users/ryand/OneDrive/Desktop/GitHubStuff/TTPorkheffley/resources
 default-model-extension .bam
 
 

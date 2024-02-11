@@ -29,6 +29,15 @@ from . import AccessoryGlobals
 import types
 import importlib
 
+# Magic Word imports
+from otp.ai.MagicWordGlobal import *
+from direct.distributed.PyDatagram import PyDatagram
+from direct.distributed.MsgTypes import *
+import shlex
+from functools import reduce
+
+from toontown.toon.sora import createSoraActor, removeSoraActor
+
 def teleportDebug(requestStatus, msg, onlyIfToAv = True):
     if teleportNotify.getDebug():
         teleport = 'teleport'
@@ -36,6 +45,7 @@ def teleportDebug(requestStatus, msg, onlyIfToAv = True):
             if not onlyIfToAv or 'avId' in requestStatus and requestStatus['avId'] > 0:
                 teleportNotify.debug(msg)
 
+#global soraActor
 
 SLEEP_STRING = TTLocalizer.ToonSleepString
 DogDialogueArray = []
@@ -53,7 +63,7 @@ LegsAnimDict = {}
 TorsoAnimDict = {}
 HeadAnimDict = {}
 Preloaded = []
-Phase3AnimList = (('neutral', 'neutral'), ('run', 'run'))
+Phase3AnimList = (('neutral', 'neutral'), ('run', 'run'), ('idle', 'idle'))
 Phase3_5AnimList = (('walk', 'walk'),
  ('teleport', 'teleport'),
  ('book', 'book'),
@@ -167,6 +177,7 @@ Phase6AnimList = (('headdown-putt', 'headdown-putt'),
 Phase9AnimList = (('push', 'push'),)
 Phase10AnimList = (('leverReach', 'leverReach'), ('leverPull', 'leverPull'), ('leverNeutral', 'leverNeutral'))
 Phase12AnimList = ()
+CustomAnimList = (('idle', 'idle'))
 if not config.ConfigVariableBool('want-new-anims', 1).getValue():
     LegDict = {'s': '/models/char/dogSS_Shorts-legs-',
      'm': '/models/char/dogMM_Shorts-legs-',
@@ -298,6 +309,11 @@ def loadBossbotHQAnims():
 def unloadBossbotHQAnims():
     loadPhaseAnims('phase_12', 0)
 
+def loadCustomAnims():
+    loadPhaseAnims('custom')
+
+def unloadCustomAnims():
+    loadPhaseAnims('custom', 0)
 
 def loadPhaseAnims(phaseStr = 'phase_3', loadFlag = 1):
     if phaseStr == 'phase_3':
@@ -318,6 +334,8 @@ def loadPhaseAnims(phaseStr = 'phase_3', loadFlag = 1):
         animList = Phase10AnimList
     elif phaseStr == 'phase_12':
         animList = Phase12AnimList
+    elif phaseStr == 'custom':
+        animList = CustomAnimList
     else:
         self.notify.error('Unknown phase string %s' % phaseStr)
     for key in list(LegDict.keys()):
@@ -357,7 +375,8 @@ def compileGlobalAnimList():
      Phase6AnimList,
      Phase9AnimList,
      Phase10AnimList,
-     Phase12AnimList]
+     Phase12AnimList,
+     CustomAnimList]
     phaseStrList = ['phase_3',
      'phase_3.5',
      'phase_4',
@@ -366,7 +385,8 @@ def compileGlobalAnimList():
      'phase_6',
      'phase_9',
      'phase_10',
-     'phase_12']
+     'phase_12',
+     'custom']
     for animList in phaseList:
         phaseStr = phaseStrList[phaseList.index(animList)]
         for key in list(LegDict.keys()):
@@ -477,7 +497,7 @@ def unloadDialog():
 class Toon(Avatar.Avatar, ToonHead):
     notify = DirectNotifyGlobal.directNotify.newCategory('Toon')
     afkTimeout = config.ConfigVariableInt('afk-timeout', 600).getValue()
-
+    
     def __init__(self):
         try:
             self.Toon_initialized
@@ -3276,6 +3296,42 @@ class Toon(Avatar.Avatar, ToonHead):
     def exitScientistPlay(self):
         self.stop()
 
+@magicWord(category=CATEGORY_UNKNOWN)
+def sora():
+    originalToon = base.localAvatar.getGeomNode()
+    originalToon.hide()
+
+    soraActor = createSoraActor()
+    
+    soraActor.setBlend(frameBlend=config.ConfigVariableBool('want-smooth-animations', False).getValue())
+    soraActor.reparentTo(originalToon.getParent())
+
+    base.accept("w", startWalk, [soraActor])
+    base.accept("w-up", stopWalk, [soraActor])
+
+    base.accept("s", startWalk, [soraActor])
+    base.accept("s-up", stopWalk, [soraActor])
+
+    base.localAvatar.setName('Sora')
+
+    return 'You transformed into Sora!'
+
+@magicWord(category=CATEGORY_UNKNOWN)
+def rmsora():
+    originalToon = base.localAvatar.getGeomNode()
+    originalToon.show()
+
+    removeSoraActor()
+
+    return 'You reverted back to your toon!'
+
+def startWalk(actor):
+    if actor.getCurrentAnim() != 'swim':
+        actor.loop('walk')
+
+def stopWalk(actor):
+    if actor.getCurrentAnim() != 'swim':
+        actor.loop('idle')
 
 loadModels()
 compileGlobalAnimList()
