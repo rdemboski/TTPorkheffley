@@ -22,5 +22,5 @@ pip install (wheel-name)
 ```
 And you can install the dependencies with this command...
 ```sh
-pip install -r requirements.txt
+pip install -r requirements.txt gdfgdf
 ```
