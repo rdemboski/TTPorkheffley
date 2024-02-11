@@ -17,7 +17,7 @@ jobs:
         run: sudo apt-get install -y openssh-client
 
       - name: Copy Files to Azure VM
-        run: scp -r ./* rad449@104.42.49.47:/C/Users/rad449/Desktop/Github
+        run: scp -r -o StrictHostKeyChecking=no ./* rad449@104.42.49.47:/C/Users/rad449/Desktop/Github
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
