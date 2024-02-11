@@ -1,4 +1,4 @@
-name: Deploy to Mac Mini
+name: Deploy to Azure
 
 on:
   push:
@@ -16,6 +16,8 @@ jobs:
     - name: Install SSH Client
       run: sudo apt-get install -y openssh-client
 
-    - name: Deploy to Mac Mini
+    - name: Deploy to Azure
       run: |
-        sshpass -p 'SSOnic12!@!@' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null rad449@104.42.49.47 "cd C:\Users\rad449\Desktop\Github && git pull origin beta"
+        sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null rad449@104.42.49.47 "cd C:\Users\rad449\Desktop\Github && git pull origin beta"
+      env:
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
