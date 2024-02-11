@@ -18,4 +18,4 @@ jobs:
 
     - name: Deploy to Mac Mini
       run: |
-        sshpass -p 'SSOnic12$$' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ryandemboski@47.215.135.41 "cd /Users/ryandemboski/Desktop/GithubAction && git pull origin beta"
+        sshpass -p 'SSOnic12!@!@' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null rad449@104.42.49.47 "cd /c/Users/rad449/Desktop/Github && git pull origin beta"
