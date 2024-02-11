@@ -18,6 +18,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          
+      - name: Load SSH key
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add /home/runner/.ssh/id_rsa
 
       - name: Copy Files to Windows VM
         run: scp -r -o StrictHostKeyChecking=no ./* rad449@104.42.49.47:/C/Users/rad449/Desktop/Github
