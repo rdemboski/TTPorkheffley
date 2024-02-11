@@ -49,6 +49,8 @@ class TTRLauncher(LauncherBase):
         sys.stdout = logOut
         sys.stderr = logErr
 
+        self.gui = None
+
     def getPlayToken(self):
         return self.getValue('TTR_PLAYCOOKIE')
 
@@ -85,36 +87,34 @@ class TTRLauncher(LauncherBase):
     def getPhaseComplete(self, phase):
         return 1
 
-    def startGame(self):
-        from toontown.toonbase import ToontownStart
-
     def create_gui(self):
-        gui = tk.Tk()
-        gui.title("Toontown Porkheffley Launcher")
+        self.gui = tk.Tk()
+        self.gui.title("Toontown Porkheffley Launcher")
 
-        playcookie_label = Label(gui, text="Username:")
+        playcookie_label = Label(self.gui, text="Username:")
         playcookie_label.grid(row=0, column=0, padx=10, pady=5)
-        self.playcookie_entry = Entry(gui)
+        self.playcookie_entry = Entry(self.gui)
         self.playcookie_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        gameserver_label = Label(gui, text="Gameserver:")
-        gameserver_label.grid(row=1, column=0, padx=10, pady=5)
-        self.gameserver_entry = Entry(gui)
-        self.gameserver_entry.grid(row=1, column=1, padx=10, pady=5)
-
-        start_button = Button(gui, text="Start Game", command=self.openLauncher)
+        start_button = Button(self.gui, text="Start Game", command=self.openLauncher)
         start_button.grid(row=2, column=0, columnspan=2, pady=10)
 
-        gui.mainloop()
+        self.gui.mainloop()
 
     def openLauncher(self):
         playcookie = self.playcookie_entry.get()
-        gameserver = self.gameserver_entry.get()
 
         self.setValue('TTR_PLAYCOOKIE', playcookie)
-        self.setValue('TTR_GAMESERVER', gameserver)
+        self.setValue('TTR_GAMESERVER', "porkheffley.westus.cloudapp.azure.com")
+
+        if self.gui:
+            self.gui.destroy()
+            self.gui = None
 
         self.startGame()
+
+    def startGame(self):
+        from toontown.toonbase import ToontownStart
 
 if __name__ == "__main__":
     launcher = TTRLauncher()
