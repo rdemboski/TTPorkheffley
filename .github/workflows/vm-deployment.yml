@@ -1,0 +1,24 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches:
+      - beta
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Install SSH
+        run: sudo apt-get install -y openssh-client
+
+      - name: Copy Files to Azure VM
+        run: scp -r ./* rad449@104.42.49.47:/C/Users/rad449/Desktop/Github
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+          AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
