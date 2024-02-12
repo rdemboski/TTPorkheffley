@@ -133,7 +133,7 @@ DirectGuiGlobals.setDefaultClickSound(base.loader.loadSfx('phase_3/audio/sfx/GUI
 
 if not ConfigVariableBool('want-retro-rewritten', False):
     # Prepare Music and Server Version
-    music = base.musicManager.getSound('phase_3/audio/bgm/ttr_d_theme_phase2.ogg')
+    music = base.musicManager.getSound('phase_3/audio/bgm/tt_theme.ogg')
     from . import ToontownLoader
     from direct.gui.DirectGui import *
     serverVersion = config.ConfigVariableString('server-version', 'no_version_set').getValue()
@@ -151,7 +151,7 @@ if not ConfigVariableBool('want-retro-rewritten', False):
 else:
     # Prepare Music
     if base.musicManagerIsValid:
-        music = base.musicManager.getSound('phase_3/audio/bgm/ttr_theme.ogg')
+        music = base.musicManager.getSound('phase_3/audio/bgm/tt_theme.ogg')
         if music:
             music.setLoop(1)
             music.setVolume(0.8)
@@ -202,7 +202,6 @@ if not ConfigVariableBool('want-retro-rewritten', False):
     from toontown.toontowngui import NewLoadingScreen
 
     loading = NewLoadingScreen.NewLoadingScreen()
-
     loading.newMusic()
     loading.newVersion()
     loading.connectBackground()
