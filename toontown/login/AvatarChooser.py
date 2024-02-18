@@ -101,7 +101,6 @@ class AvatarChooser(StateData.StateData):
             pass
         else:
             self.loading.cleanup()
-            self.loading.musicLoadIn()
         #self.logoutButton.hide()
         gui.removeNode()
         gui2.removeNode()

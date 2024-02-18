@@ -105,7 +105,7 @@ class TTRLauncher(LauncherBase):
         playcookie = self.playcookie_entry.get()
 
         self.setValue('TTR_PLAYCOOKIE', playcookie)
-        self.setValue('TTR_GAMESERVER', "porkheffley.westus.cloudapp.azure.com")
+        self.setValue('TTR_GAMESERVER', "127.0.0.1")
 
         if self.gui:
             self.gui.destroy()

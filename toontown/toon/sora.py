@@ -40,11 +40,11 @@ def hideToon():
 def createSoraActor():
     global soraActor
     if soraActor is None:
-        soraActor = Actor.Actor('/Users/ryandemboski/Desktop/GitHub/TTPorkheffley/resources/phase_3/models/char/sora_model.bam',
-                                {'idle': '/Users/ryandemboski/Desktop/GitHub/TTPorkheffley/resources/phase_3/models/char/sora-idle.bam',
-                                'walk': '/Users/ryandemboski/Desktop/GitHub/TTPorkheffley/resources/phase_3/models/char/sora-walk.bam',
-                                'dance': '/Users/ryandemboski/Desktop/GitHub/TTPorkheffley/resources/phase_3/models/char/sora-dance.bam',
-                                'swim': '/Users/ryandemboski/Desktop/GitHub/TTPorkheffley/resources/phase_3/models/char/sora-swim.bam'})
+        soraActor = Actor.Actor('phase_3/models/char/sora_model',
+                                {'idle': 'phase_3/models/char/sora-idle',
+                                'walk': 'phase_3/models/char/sora-walk',
+                                'dance': 'phase_3/models/char/sora-dance',
+                                'swim': 'phase_3/models/char/sora-swim'})
         soraActor.setBlend(frameBlend=config.ConfigVariableBool('want-smooth-animations', False).getValue())
         soraActor.setPos(0, 0, 0)
         soraActor.setScale(0.03)

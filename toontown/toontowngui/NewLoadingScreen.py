@@ -21,43 +21,17 @@ class NewLoadingScreen(DirectObject.DirectObject):
     def newMusic(self):
         base.musicManager.setConcurrentSoundLimit(2)
         global musPhase1
-        #global musPhase2
         musPhase1 = base.musicManager.getSound('phase_3/audio/bgm/tt_theme.ogg')
-        #musPhase2 = base.musicManager.getSound('phase_3/audio/bgm/ttr_d_theme_phase2.ogg')
         if musPhase1:
             self.musicVolCont1(1)
             if not __debug__:
                 musPhase1.setLoopStart(2.9)
-                #musPhase2.setLoopStart(2.9)
             musPhase1.setLoop(True)
-            #musPhase2.setLoop(True)
             musPhase1.play()
-            #musPhase2.play()
         base.musicManager.update()
-
-    def musicLoadIn(self):
-        phase1 = LerpFunc(self.musicVolCont1,
-                    fromData=1,
-                    toData=0,
-                    duration=2,
-                    blendType='easeIn',
-                    extraArgs=[],
-                    name=None)
-        
-        # phase2 = LerpFunc(self.musicVolCont2,
-        #             fromData=0,
-        #             toData=1,
-        #             duration=2,
-        #             blendType='easeIn',
-        #             extraArgs=[],
-        #             name=None)
-
-        phase1.start()
-        #phase2.start()
 
     def exitMusic(self):
         musPhase1.stop()
-        #musPhase2.stop()
 
     def newVersion(self):
         serverVersion = config.ConfigVariableString('server-version', 'no_version_set').getValue()
