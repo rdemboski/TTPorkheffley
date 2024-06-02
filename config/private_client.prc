@@ -3,9 +3,9 @@
 # Config.prc should be reproduced here.
 
 # Client settings
-window-title Toontown Rewritten [OFFLINE]
-server-version ttroff-beta-v2.12.2
-sync-video #f
+window-title Toontown Porkheffley [OFFLINE]
+server-version porkheffley-beta-v2.12.2
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -14,7 +14,7 @@ load-display pandagl
 
 
 # New Addons!
-want-WASD #t
+want-WASD #f
 tt-framerate #t
 want-new-toonhall #t
 want-max-font #t
