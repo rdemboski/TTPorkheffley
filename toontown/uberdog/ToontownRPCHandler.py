@@ -8,11 +8,12 @@ from toontown.toon import ToonDNA
 from toontown.toonbase import TTLocalizer
 # For system message:
 from otp.distributed import OtpDoGlobals
+# For air intellisense:
+from direct.distributed.AstronInternalRepository import AstronInternalRepository
 
 class ToontownRPCHandler:
     def __init__(self, air):
-        self.air = air
-
+        self.air: AstronInternalRepository = air
         self.shardStatus = ShardStatusReceiver(self.air)
 
     def rpc_ping(self, request, data):

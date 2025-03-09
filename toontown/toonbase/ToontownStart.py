@@ -1,6 +1,14 @@
 from panda3d.core import *
 import builtins
 import os
+import debugpy
+import sys
+
+if "--debug" in sys.argv:
+    debugpy.listen(("localhost", 5678))
+    print("Waiting for debugger to attach...")
+    debugpy.wait_for_client()
+    print("Debugger attached! Now running...")
 
 if __debug__:
     loadPrcFile('config/dev.prc')

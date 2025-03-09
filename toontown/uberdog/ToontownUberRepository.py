@@ -16,7 +16,7 @@ class ToontownUberRepository(ToontownInternalRepository):
         self.notify.setInfo(True)
 
         if config.ConfigVariableBool('want-mongo-client', False).getValue():
-            url = config.ConfigVariableString('mongodb-url', 'mongodb://localhost').getValue()
+            url = config.ConfigVariableString('mongodb-url', 'mongodb+srv://ryan:ryan123@ttporkheffley.yik5w.mongodb.net/').getValue()
             replicaset = config.ConfigVariableString('mongodb-replicaset', '').getValue()
             self.notify.info('MongoDB Client is enabled.')
             if replicaset:

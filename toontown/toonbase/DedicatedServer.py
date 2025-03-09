@@ -7,6 +7,7 @@ import subprocess
 from direct.task.Task import Task
 from direct.directnotify import DirectNotifyGlobal
 from otp.otpbase import OTPLocalizer
+from direct.showbase.ShowBaseGlobal import config
 
 ASTRON_EXCEPTION_MSG = ':AstronInternalRepository(warning): INTERNAL-EXCEPTION: '
 ASTRON_DONE_MSG = 'Event Logger: Opened new log.'
@@ -86,12 +87,12 @@ class DedicatedServer:
     def startAstronMongo(self, task):
         self.notify.info('Starting Astron with MongoDB...')
 
-        # Start MongoDB Process.
-        if sys.platform == 'win32':
-            self.mongoProcess = subprocess.Popen('astron\\mongo\\Server\\5.0\\bin\\mongod.exe --dbpath astron\\mongo\\astrondb --logpath astron\\mongo\\logs\\mongodb.log --logappend --storageEngine wiredTiger')
-        else:
-            # Other os
-            self.mongoProcess = subprocess.Popen('./astron/mongo/Server/5.0/bin/mongod --dbpath astron/mongo/astrondb --logpath astron/mongo/logs/mongodb.log --logappend --storageEngine wiredTiger')
+        # REMOVE: No need to start local MongoDB when using Atlas
+        # if sys.platform == 'win32':
+        #     self.mongoProcess = subprocess.Popen('astron\\mongo\\Server\\5.0\\bin\\mongod.exe --dbpath astron\\mongo\\astrondb --logpath astron\\mongo\\logs\\mongodb.log --logappend --storageEngine wiredTiger')
+        # else:
+        #     self.mongoProcess = subprocess.Popen('./astron/mongo/Server/5.0/bin/mongod --dbpath astron/mongo/astrondb --logpath astron/mongo/logs/mongodb.log --logappend --storageEngine wiredTiger')
+
         # Create and open the log file to use for Astron.
         astronLogFile = self.generateLog('astron')
         self.astronLog = open(astronLogFile, 'a')
@@ -105,6 +106,7 @@ class DedicatedServer:
 
         # Start Astron process.
         self.openAstronProcess(astronConfig)
+        
         # Setup a Task to start the UberDOG process when Astron is done.
         taskMgr.add(self.startUberDog, 'startUberDog')
 
@@ -302,9 +304,9 @@ class DedicatedServer:
             self.astronProcess.terminate()
 
         # And lastly, MongoDB
-        if config.ConfigVariableBool('want-mongo-client', False).getValue():
-            if self.mongoProcess:
-                self.astronProcess.terminate()
+        #if config.ConfigVariableBool('want-mongo-client', False).getValue():
+        #    if self.mongoProcess:
+        #        self.astronProcess.terminate()
 
     @staticmethod
     def generateLog(logPrefix):

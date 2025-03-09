@@ -3,17 +3,22 @@ from direct.gui import DirectGuiGlobals
 from direct.showbase import DirectObject
 from direct.interval.IntervalGlobal import LerpScaleInterval, Sequence, LerpFunc
 from toontown.toonbase import ToontownGlobals
-from panda3d.core import *
+from direct.showbase.ShowBaseGlobal import base, config
+from direct.showbase.Loader import Loader
+from direct.showbase.ShowBase import ShowBase
+from panda3d.core import Vec4, Vec3, TextNode
 
 class NewLoadingScreen(DirectObject.DirectObject):
-
     def __init__(self):
+        self.base: ShowBase = base
+        self.loader: Loader = base.loader
+        
         DirectGuiGlobals.setDefaultFontFunc(ToontownGlobals.getInterfaceFont)
-        if ConfigVariableBool('want-retro-rewritten', False):
-            base.setBackgroundColor(ToontownGlobals.DefaultBackgroundColor)
+        if config.ConfigVariableBool('want-retro-rewritten', False):
+            self.base.setBackgroundColor(ToontownGlobals.DefaultBackgroundColor)
         else:
-            base.setBackgroundColor(Vec4(0.145, 0.368, 0.78, 1))
-
+            self.base.setBackgroundColor(Vec4(0.145, 0.368, 0.78, 1))
+        
     def musicVolCont1(self, t):
         musPhase1.setVolume(t)
     
@@ -21,21 +26,21 @@ class NewLoadingScreen(DirectObject.DirectObject):
         musPhase2.setVolume(t)
 
     def newMusic(self):
-        base.musicManager.setConcurrentSoundLimit(2)
+        self.base.musicManager.setConcurrentSoundLimit(2)
         global musPhase1
         global musPhase2
-        musPhase1 = base.musicManager.getSound('phase_3/audio/bgm/ttr_d_theme_phase1.ogg')
-        musPhase2 = base.musicManager.getSound('phase_3/audio/bgm/ttr_d_theme_phase2.ogg')
+        musPhase1 = self.base.musicManager.getSound('phase_3/audio/bgm/ttr_d_theme_phase1.ogg')
+        musPhase2 = self.base.musicManager.getSound('phase_3/audio/bgm/ttr_d_theme_phase2.ogg')
         if musPhase1:
             self.musicVolCont1(1)
             self.musicVolCont2(0)
-            musPhase1.setLoopStart(2.9)
-            musPhase2.setLoopStart(2.9)
+            #musPhase1.setLoopStart(2.9)
+            #musPhase2.setLoopStart(2.9)
             musPhase1.setLoop(True)
             musPhase2.setLoop(True)
             musPhase1.play()
             musPhase2.play()
-        base.musicManager.update()
+        self.base.musicManager.update()
 
     def musicLoadIn(self):
         phase1 = LerpFunc(
@@ -68,7 +73,7 @@ class NewLoadingScreen(DirectObject.DirectObject):
     def newVersion(self):
         serverVersion = config.ConfigVariableString('server-version', 'no_version_set').getValue()
         global version
-        version = OnscreenText(serverVersion, pos=(-1, -1.2), scale=0.055, font=loader.loadFont('phase_3/fonts/ImpressBT.ttf'), fg=Vec4(1, 1, 1, 1), align=TextNode.ALeft)
+        version = OnscreenText(serverVersion, pos=(-1, -1.2), scale=0.055, font=self.loader.loadFont('phase_3/fonts/ImpressBT.ttf'), fg=Vec4(1, 1, 1, 1), align=TextNode.ALeft)
         version.setPos(0.12,0.045)
         version.reparentTo(base.a2dBottomLeft)
         return version
@@ -79,7 +84,7 @@ class NewLoadingScreen(DirectObject.DirectObject):
         connectbg.setBin('background', 1)
 
     def newLogo(self):
-        logobam = loader.loadModel('phase_3/models/gui/toontown-logo')
+        logobam = self.loader.loadModel('phase_3/models/gui/toontown-logo')
         findlogo = logobam.find('**/logo')
         global logo
         logo = OnscreenGeom(geom = findlogo, pos = (0, 0, 0.35))

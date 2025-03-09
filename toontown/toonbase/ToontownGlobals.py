@@ -2,7 +2,10 @@ from . import TTLocalizer
 from otp.otpbase.OTPGlobals import *
 from direct.showbase.PythonUtil import invertDict
 from enum import Enum
-from panda3d.core import *
+from panda3d.core import BitMask32, Vec4
+from direct.showbase.ShowBaseGlobal import config
+from direct.showbase.Loader import Loader
+
 MapHotkeyOn = 'alt'
 MapHotkeyOff = 'alt-up'
 MapHotkey = 'alt'
@@ -134,13 +137,17 @@ MickeyFontMaximum = None
 def getToonFont():
     global ToonFont
     if ToonFont == None:
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         ToonFont = loader.loadFont(TTLocalizer.ToonFont, lineHeight=1.0)
     return ToonFont
 
 
 def getBuildingNametagFont():
     global getMickeyFont
-    if ConfigVariableBool('want-max-font', False):
+    from direct.showbase.ShowBaseGlobal import base
+    loader: Loader = base.loader
+    if config.ConfigVariableBool('want-max-font', False):
         MickeyFontMaximum = loader.loadFont(TTLocalizer.MickeyFontMaximum)
         return MickeyFontMaximum
     else:
@@ -151,6 +158,8 @@ def getBuildingNametagFont():
 def getMinnieFont():
     global MinnieFont
     if MinnieFont == None:
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         MinnieFont = loader.loadFont(TTLocalizer.MinnieFont)
     return MinnieFont
 
@@ -158,30 +167,40 @@ def getMinnieFont():
 def getSuitFont():
     global SuitFont
     if SuitFont == None:
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         SuitFont = loader.loadFont(TTLocalizer.SuitFont, pixelsPerUnit=40, spaceAdvance=0.25, lineHeight=1.0)
     return SuitFont
 
 def getMickeyFontClassic():
     global MickeyFontClassic
     if MickeyFontClassic == None:
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         MickeyFontClassic = loader.loadFont(TTLocalizer.MickeyFontClassic)
     return MickeyFontClassic
 
 def getMickeyFontStandard():
     global MickeyFontStandard
     if MickeyFontStandard == None:
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         MickeyFontStandard = loader.loadFont(TTLocalizer.MickeyFontStandard)
     return MickeyFontStandard
 
 def getMickeyFontMaximum():
     global MickeyFontMaximum
     if MickeyFontMaximum == None:
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         MickeyFontMaximum = loader.loadFont(TTLocalizer.MickeyFontMaximum)
     return MickeyFontMaximum
 
 def getMickeyFont():
     global getMickeyFont
-    if ConfigVariableBool('want-max-font', False):
+    if config.ConfigVariableBool('want-max-font', False):
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         MickeyFontMaximum = loader.loadFont(TTLocalizer.MickeyFontMaximum)
         return MickeyFontMaximum
     else:
@@ -190,7 +209,9 @@ def getMickeyFont():
 
 def getSignFont():
     global getSignFont
-    if ConfigVariableBool('want-max-font', False):
+    if config.ConfigVariableBool('want-max-font', False):
+        from direct.showbase.ShowBaseGlobal import base
+        loader: Loader = base.loader
         MickeyFontMaximum = loader.loadFont(TTLocalizer.MickeyFontMaximum)
         return MickeyFontMaximum
     else:

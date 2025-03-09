@@ -1,3 +1,4 @@
+import sys
 from direct.distributed.DistributedObjectGlobalUD import DistributedObjectGlobalUD
 from direct.directnotify.DirectNotifyGlobal import directNotify
 from direct.distributed.MsgTypes import *
@@ -8,6 +9,7 @@ from toontown.makeatoon.NameGenerator import NameGenerator
 from toontown.toonbase import TTLocalizer
 from otp.distributed import OtpDoGlobals
 from sys import platform
+from pymongo import MongoClient
 import semidbm
 import time
 import hmac
@@ -121,85 +123,98 @@ class OperationFSM(FSM):
         else:
             del self.csm.account2fsm[self.target]
 
+MONGO_URI = "mongodb+srv://ryan:ryan123@ttporkheffley.yik5w.mongodb.net"
+client = MongoClient(MONGO_URI)
+db = client["astron"]
+collection = db["astron.objects"]
+
 class LoginAccountFSM(OperationFSM):
     TARGET_CONNECTION = True
-    notify = directNotify.newCategory('LoginAccountFSM')
+    notify = directNotify.newCategory("LoginAccountFSM")
 
     def enterStart(self, cookie):
         self.cookie = cookie
+        self.notify.info(f"Starting login process...")
         self.demand('QueryAccountDB')
 
     def enterQueryAccountDB(self):
-        self.csm.accountDB.lookup(self.cookie, self.__handleLookup)
+        self.notify.info(f"Querying DB for username: {self.cookie}")
 
-    def __handleLookup(self, result):
-        if not result.get('success'):
-            self.csm.air.writeServerEvent('cookie-rejected', clientId=self.target, cookie=self.cookie)
-            self.demand('Kill', result.get('reason', 'The accounts database rejected your cookie.'))
+        try:
+            if isinstance(self.cookie, bytes):
+                formatted_cookie = str(self.cookie)
+            elif not self.cookie.startswith("b'"):
+                formatted_cookie = f"b'{self.cookie}'"
+            else:
+                formatted_cookie = self.cookie
+
+            account = collection.find_one(
+                {"fields.ACCOUNT_ID": formatted_cookie},
+                {"_id": 1}
+            )
+
+            if not account:
+                self.notify.warning(f"No DOID found for ACCOUNT_ID {self.cookie}, creating a new one.")
+                self.databaseId = self.cookie
+                self.adminAccess = 507
+                self.demand('CreateAccount')
+                return
+
+            doid = account["_id"]
+            self.accountId = doid
+            self.databaseId = self.cookie
+            self.notify.info(f"Found DOID {doid} for ACCOUNT_ID {self.cookie}, querying full account...")
+
+            self.csm.air.dbInterface.queryObject(
+                self.csm.air.dbId,
+                doid,
+                self.__handleRetrieve,
+                self.csm.air.dclassesByName["AccountUD"]
+            )
+
+        except Exception as e:
+            self.notify.error(f"MongoDB Query Failed: {str(e)}")
             return
-
-        self.databaseId = result.get('databaseId', 0)
-        self.accountId = result.get('accountId', 0)
-        self.adminAccess = result.get('adminAccess', 0)
-
-        # Binary bitmask in base10 form, added to the adminAccess.
-        # To find out what they have access to, convert the serverAccess to 3-bit binary.
-        # 2^2 = dev, 2^1 = qa, 2^0 = test
-        serverType = config.ConfigVariableString('server-type', 'dev').getValue()
-        serverAccess = self.adminAccess % 10 # Get the last digit in their access.
-        if (serverType == 'dev' and not serverAccess & 4) or \
-           (serverType == 'qa' and not serverAccess & 2) or \
-           (serverType == 'test' and not serverAccess & 1):
-            self.csm.air.writeServerEvent('insufficient-access', clientId=self.target, cookie=self.cookie)
-            self.demand('Kill', result.get('reason', 'You have insufficient access to login.'))
-            return
-
-        if self.accountId:
-            self.demand('RetrieveAccount')
-        else:
-            self.demand('CreateAccount')
-
-    def enterRetrieveAccount(self):
-        self.csm.air.dbInterface.queryObject(self.csm.air.dbId, self.accountId,
-                                             self.__handleRetrieve)
 
     def __handleRetrieve(self, dclass, fields):
-        if dclass != self.csm.air.dclassesByName['AccountUD']:
-            self.demand('Kill', 'Your account object was not found in the database!')
+        if not fields:
+            self.notify.warning(f"Account {self.cookie} exists but has no fields.")
             return
 
-        self.account = fields
-        self.demand('SetAccount')
+        self.notify.info(f"Retrieved Account Data: {fields}")
+
+        if self.accountId:
+            self.account = fields
+            self.adminAccess = fields.get("ADMIN_ACCESS", 0)
+            self.demand('SetAccount')
+        else:
+            self.notify.error(f"self.accountId is invalid, stopping execution.")
 
     def enterCreateAccount(self):
-        self.account = {'ACCOUNT_AV_SET': [0] * 6,
-                        'ESTATE_ID': 0,
-                        'ACCOUNT_AV_SET_DEL': [],
-                        'CREATED': time.ctime(),
-                        'LAST_LOGIN': time.ctime(),
-                        'ACCOUNT_ID': str(self.databaseId),
-                        'ADMIN_ACCESS': self.adminAccess}
+        self.account = {
+            'ACCOUNT_AV_SET': [0] * 6,
+            'ESTATE_ID': 0,
+            'ACCOUNT_AV_SET_DEL': [],
+            'CREATED': time.ctime(),
+            'LAST_LOGIN': time.ctime(),
+            'ACCOUNT_ID': str(self.databaseId),
+            'ADMIN_ACCESS': self.adminAccess
+        }
 
         self.csm.air.dbInterface.createObject(
             self.csm.air.dbId,
             self.csm.air.dclassesByName['AccountUD'],
             self.account,
-            self.__handleCreate)
+            self.__handleCreate
+        )
 
     def __handleCreate(self, accountId):
-        if self.state != 'CreateAccount':
-            self.notify.warning('Received create account response outside of CreateAccount state.')
-            return
-
         if not accountId:
-            self.notify.warning('Database failed to construct an account object!')
-            self.demand('Kill', 'Your account object could not be created in the game database.')
+            self.csm.notify.warning("Failed to create account!")
             return
-
-        self.csm.air.writeServerEvent('account-created', accId=accountId)
 
         self.accountId = accountId
-        self.demand('StoreAccountID')
+        self.demand("StoreAccountID")
 
     def enterStoreAccountID(self):
         self.csm.accountDB.storeAccountID(
@@ -282,7 +297,8 @@ class LoginAccountFSM(OperationFSM):
         # We're done.
         self.csm.air.writeServerEvent('account-login', clientId=self.target, accId=self.accountId, webAccId=self.databaseId, cookie=self.cookie)
         self.csm.sendUpdateToChannel(self.target, 'acceptLogin', [])
-        self.demand('Off')
+                
+        self.demand("RetrieveAvatars")
 
 class CreateAvatarFSM(OperationFSM):
     notify = directNotify.newCategory('CreateAvatarFSM')
