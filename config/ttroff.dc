@@ -713,11 +713,12 @@ from toontown.racing import DistributedRace/AI
 from toontown.racing import DistributedKartPad/AI
 from toontown.racing import DistributedRacePad/AI
 from toontown.racing import DistributedViewPad/AI
-from toontown.racing import DistributedStartingBlock/AI
+//from toontown.racing import DistributedStartingBlock/AI
 from toontown.racing import DistributedLeaderBoard/AI
 from toontown.racing import DistributedGag/AI
 from toontown.racing import DistributedProjectile/AI
-from toontown.racing.DistributedStartingBlock/AI import DistributedViewingBlock/AI
+//from toontown.racing.DistributedStartingBlock/AI import DistributedViewingBlock/AI
+from toontown.racing.DistributedViewingBlock/AI import DistributedViewingBlock/AI
 from toontown.uberdog.ClientServicesManager/UD import ClientServicesManager/UD
 from toontown.uberdog.DistributedDeliveryManager/AI/UD import DistributedDeliveryManager/AI/UD
 from toontown.uberdog.DistributedDataStoreManager/AI/UD import DistributedDataStoreManager/AI/UD

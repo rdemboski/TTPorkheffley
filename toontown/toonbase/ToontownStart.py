@@ -1,8 +1,29 @@
+print("ToontownSettings.py loaded")
+
 from panda3d.core import *
 import builtins
 import os
 import debugpy
 import sys
+import time
+import random
+
+timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+log_dir = "logs"
+log_file_path = os.path.join(log_dir, f"crashlog_{timestamp}.log")
+
+try:
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = open(log_file_path, "w", buffering=1)  # line-buffered
+    sys.stdout = sys.stderr = log_file
+    print("=" * 60)
+    print(f"Logging started: {time.ctime()}")
+    print(f"Log file: {log_file_path}")
+    print("=" * 60)
+except Exception as e:
+    import traceback
+    print("Failed to set up logging:")
+    traceback.print_exc()
 
 if "--debug" in sys.argv:
     debugpy.listen(("localhost", 5678))
@@ -10,8 +31,9 @@ if "--debug" in sys.argv:
     debugpy.wait_for_client()
     print("Debugger attached! Now running...")
 
-if __debug__:
-    loadPrcFile('config/dev.prc')
+# if __debug__:
+#     loadPrcFile('config/dev.prc')
+loadPrcFile('config/dev.prc')
 
 # The VirtualFileSystem, which has already initialized, doesn't see the mount
 # directives in the config(s) yet. We have to force it to load those manually:
@@ -21,18 +43,21 @@ mounts = ConfigVariableList('vfs-mount')
 for mount in mounts:
     mountfile, mountpoint = (mount.split(' ', 2) + [None, None, None])[:2]
     vfs.mount(Filename(mountfile), Filename(mountpoint), 0)
+    
+os.environ["TTR_PLAYCOOKIE"] = "Username1"
+os.environ["TTR_GAMESERVER"] = "127.0.0.1"
 
 # Temporary Content Pack Loader (put Multifiles in "resources" folder)
-import glob
-for file in glob.glob('resources/*.mf'):
-    mf = Multifile()
-    mf.openReadWrite(Filename(file))
-    names = mf.getSubfileNames()
-    for name in names:
-        ext = os.path.splitext(name)[1]
-        if ext not in ['.jpg', '.jpeg', '.ogg', '.rgb']:
-            mf.removeSubfile(name)
-    vfs.mount(mf, Filename('/'), 0)
+# import glob
+# for file in glob.glob('resources/*.mf'):
+#     mf = Multifile()
+#     mf.openReadWrite(Filename(file))
+#     names = mf.getSubfileNames()
+#     for name in names:
+#         ext = os.path.splitext(name)[1]
+#         if ext not in ['.jpg', '.jpeg', '.ogg', '.rgb']:
+#             mf.removeSubfile(name)
+#     vfs.mount(mf, Filename('/'), 0)
 
 # Configure/Start Toontown Client
 class game:
@@ -42,10 +67,7 @@ class game:
 print('TTROffline: Ongoing project by RegDogg')
 print('ToontownStart: Starting the game.')
 builtins.game = game()
-import time
-import sys
-import random
-import builtins
+
 try:
     launcher
 except:
@@ -60,10 +82,29 @@ else:
 tempLoader = Loader()
 
 # Settings
-print('ToontownStart: loading game settings')
-from toontown.settings.ToontownSettings import ToontownSettings
-settings = ToontownSettings()
-settings.loadFromSettings()
+print('ToontownStart: loading game settings (1)')
+try:
+    from toontown.settings.ToontownSettings import ToontownSettings
+    print('ToontownStart: settings module imported (2)')
+    settings = ToontownSettings()
+    print('ToontownStart: settings object created (3)')
+    settings.loadFromSettings()
+    print('ToontownStart: settings loaded (4)')
+except Exception as e:
+    import traceback
+    sys.stdout.flush()
+    sys.stderr.flush()
+    with open("ttph-crash.log", "w") as f:
+        f.write("Exception occurred during settings load:\n")
+        traceback.print_exc(file=f)
+    raise
+
+# Add this right after:
+import atexit
+def on_exit():
+    with open("ttph-exit.log", "w") as f:
+        f.write("Exited cleanly\n")
+atexit.register(on_exit)
 
 if ConfigVariableBool('want-retro-rewritten', False):
     # Poll for game finished

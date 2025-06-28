@@ -1,0 +1,5 @@
+panda3d
+pymongo
+semidbm
+debugpy
+requests

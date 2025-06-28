@@ -1,6 +1,6 @@
 from direct.directnotify import DirectNotifyGlobal
 from toontown.racing.DistributedKartPadAI import DistributedKartPadAI
-from toontown.racing.DistributedStartingBlockAI import DistributedViewingBlockAI
+from toontown.racing.DistributedViewingBlockAI import DistributedViewingBlockAI
 from direct.distributed.ClockDelta import *
 from toontown.dna.DNASpawnerAI import *
 from toontown.dna.DNANode import DNANode

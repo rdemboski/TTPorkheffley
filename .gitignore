@@ -16,3 +16,6 @@ files.py
 ai-crash.txt
 PPYTHON_PATH
 Panda3D-1.10.11/
+.venv/
+build/
+panda_overrides/

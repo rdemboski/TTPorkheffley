@@ -11,14 +11,18 @@ class LogAndOutput:
         self.log = log
 
     def write(self, str):
-        self.log.write(str)
-        self.log.flush()
-        self.orig.write(str)
-        self.orig.flush()
+        if self.log:
+            self.log.write(str)
+            self.log.flush()
+        if self.orig:
+            self.orig.write(str)
+            self.orig.flush()
 
     def flush(self):
-        self.log.flush()
-        self.orig.flush()
+        if self.log:
+            self.log.flush()
+        if self.orig:
+            self.orig.flush()
 
 class TTRLauncher(LauncherBase):
     notify = DirectNotifyGlobal.directNotify.newCategory('ToontownDummyLauncher')
@@ -39,11 +43,19 @@ class TTRLauncher(LauncherBase):
         
         logfile = os.path.join('logs', self.logPrefix + logSuffix + '.log')
 
-        log = open(logfile, 'a')
-        logOut = LogAndOutput(sys.stdout, log)
-        logErr = LogAndOutput(sys.stderr, log)
-        sys.stdout = logOut
-        sys.stderr = logErr
+        try:
+            log = open(logfile, 'a')
+            if sys.stdout:
+                sys.stdout = LogAndOutput(sys.stdout, log)
+            else:
+                print("Warning: sys.stdout is None — not redirecting stdout.")
+
+            if sys.stderr:
+                sys.stderr = LogAndOutput(sys.stderr, log)
+            else:
+                print("Warning: sys.stderr is None — not redirecting stderr.")
+        except Exception as e:
+            print("Failed to set up log file redirection:", e)
 
     def getPlayToken(self):
         return self.getValue('TTR_PLAYCOOKIE')
