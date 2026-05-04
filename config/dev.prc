@@ -3,9 +3,9 @@
 # as well as deployment/server.prc if necessary.
 
 # Client settings
-window-title Toontown Rewritten [DEV BUILD]
-server-version ttroff-beta-v2.12.2
-sync-video #f
+window-title Toontown Porkheffley [DEV]
+server-version ttph-v1.0.0
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -15,7 +15,7 @@ default-directnotify-level info
 
 
 # New Addons!
-want-WASD #t
+want-WASD #f
 tt-framerate #t
 want-new-toonhall #t
 want-max-font #t
@@ -36,6 +36,7 @@ vfs-mount resources/phase_10 /phase_10
 vfs-mount resources/phase_11 /phase_11
 vfs-mount resources/phase_12 /phase_12
 vfs-mount resources/phase_13 /phase_13
+vfs-mount resources/custom /custom
 model-path /
 default-model-extension .bam
 

@@ -4,7 +4,7 @@
 
 # Client settings
 window-title Toontown Rewritten [OFFLINE]
-server-version ttroff-beta-v2.12.2
+server-version ttph-v1.0.0
 sync-video #f
 want-dev #f
 preload-avatars #t
@@ -37,6 +37,7 @@ vfs-mount phase_10.mf /
 vfs-mount phase_11.mf /
 vfs-mount phase_12.mf /
 vfs-mount phase_13.mf /
+vfs-mount custom.mf /
 default-model-extension .bam
 
 

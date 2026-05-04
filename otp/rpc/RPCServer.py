@@ -5,8 +5,8 @@ from direct.fsm.FSM import *
 import urllib.parse
 import binascii
 import json
-import asyncore, asynchat
 import socket
+import selectors
 import http.client
 import time
 
@@ -31,11 +31,163 @@ rpc_server_keepalive = ConfigVariableInt(
     'rpc-server-keepalive', 5,
     'How many seconds the server will leave a Keep-Alive connection open.')
 
-class RPCServer(asyncore.dispatcher):
+_selector = selectors.DefaultSelector()
+
+
+class _Dispatcher:
+    """Non-blocking socket dispatcher (replaces asyncore.dispatcher)."""
+
+    def __init__(self, sock=None):
+        self._sock = None
+        self._write_buf = b''
+        self._closing = False
+        if sock is not None:
+            self._attach(sock)
+
+    def _attach(self, sock):
+        self._sock = sock
+        self._sock.setblocking(False)
+        _selector.register(self._sock, selectors.EVENT_READ, self)
+
+    def _update_selector(self):
+        if self._sock is None:
+            return
+        events = selectors.EVENT_READ
+        if self._write_buf:
+            events |= selectors.EVENT_WRITE
+        try:
+            _selector.modify(self._sock, events, self)
+        except KeyError:
+            pass
+
+    def create_socket(self, family=socket.AF_INET, stype=socket.SOCK_STREAM):
+        self._sock = socket.socket(family, stype)
+        self._sock.setblocking(False)
+
+    def set_reuse_addr(self):
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def bind(self, addr):
+        self._sock.bind(addr)
+
+    def listen(self, backlog):
+        self._sock.listen(backlog)
+        _selector.register(self._sock, selectors.EVENT_READ, self)
+
+    def push(self, data):
+        if isinstance(data, str):
+            data = data.encode('latin-1')
+        self._write_buf += data
+        self._update_selector()
+
+    def close_when_done(self):
+        self._closing = True
+        if not self._write_buf:
+            self._do_close()
+
+    def handle_read_event(self):
+        self.handle_read()
+
+    def handle_write_event(self):
+        if self._write_buf:
+            try:
+                sent = self._sock.send(self._write_buf)
+                self._write_buf = self._write_buf[sent:]
+            except OSError:
+                self._do_close()
+                return
+        if not self._write_buf:
+            if self._closing:
+                self._do_close()
+            else:
+                self._update_selector()
+
+    def _do_close(self):
+        if self._sock is None:
+            return
+        try:
+            _selector.unregister(self._sock)
+        except KeyError:
+            pass
+        try:
+            self._sock.close()
+        except OSError:
+            pass
+        self._sock = None
+
+    def handle_read(self):
+        pass
+
+    def handle_close(self):
+        pass
+
+
+class _BufferedChat(_Dispatcher):
+    """Buffered line/length reader (replaces asynchat.async_chat)."""
+
+    def __init__(self, sock=None):
+        super().__init__(sock)
+        self._in_buf = b''
+        self._terminator = None
+
+    def set_terminator(self, term):
+        if isinstance(term, str):
+            term = term.encode('latin-1')
+        self._terminator = term
+
+    def handle_read(self):
+        try:
+            data = self._sock.recv(8192)
+        except OSError:
+            self._do_close()
+            self.handle_close()
+            return
+        if not data:
+            self._do_close()
+            self.handle_close()
+            return
+        self._in_buf += data
+        self._process_input()
+
+    def _process_input(self):
+        while self._terminator is not None:
+            term = self._terminator
+            if isinstance(term, int):
+                if len(self._in_buf) >= term:
+                    chunk = self._in_buf[:term].decode('latin-1')
+                    self._in_buf = self._in_buf[term:]
+                    self._terminator = None
+                    self.collect_incoming_data(chunk)
+                    self.found_terminator()
+                else:
+                    break
+            else:
+                idx = self._in_buf.find(term)
+                if idx >= 0:
+                    chunk = self._in_buf[:idx].decode('latin-1')
+                    self._in_buf = self._in_buf[idx + len(term):]
+                    self._terminator = None
+                    self.collect_incoming_data(chunk)
+                    self.found_terminator()
+                else:
+                    if len(self._in_buf) > len(term):
+                        safe = len(self._in_buf) - len(term)
+                        self.collect_incoming_data(self._in_buf[:safe].decode('latin-1'))
+                        self._in_buf = self._in_buf[safe:]
+                    break
+
+    def collect_incoming_data(self, data):
+        pass
+
+    def found_terminator(self):
+        pass
+
+
+class RPCServer(_Dispatcher):
     notify = directNotify.newCategory('RPCServer')
 
     def __init__(self, handler, url=None):
-        asyncore.dispatcher.__init__(self)
+        super().__init__()
 
         self.handler = handler
         url = urllib.parse.urlparse(url or rpc_server_endpoint.getValue())
@@ -43,59 +195,63 @@ class RPCServer(asyncore.dispatcher):
         if url.scheme and url.scheme != 'http':
             self.notify.error('Scheme must be HTTP, not %s!' % url.scheme)
 
-        # Parse out hostname/port:
         hostname = url.hostname
         port = url.port or 80
 
-        if hostname == None:
-            # We're not interested in running an RPC server on this process...
+        if hostname is None:
             return
 
-        # Parse out authentication info:
         username = url.username
         password = url.password
 
         auth = username
-        if password != None:
+        if password is not None:
             auth += ':' + password
 
-        if auth != None:
-            self.auth = binascii.b2a_base64(auth).strip()
+        if auth is not None:
+            self.auth = binascii.b2a_base64(auth.encode()).strip().decode('ascii')
         else:
             self.auth = None
 
-        # Parse out required path:
         self.path = url.path or '/'
 
-        # Next, initialize the socket:
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         self.bind((hostname, port))
         self.listen(5)
 
-        # Now launch the event-handling task:
         taskMgr.add(self.task, 'RPCServer')
 
     def task(self, task):
         timeout = rpc_server_polltime.getValue() * 0.001
         count = rpc_server_polliters.getValue()
-        asyncore.loop(timeout=timeout, count=count)
+        for _ in range(count):
+            events = _selector.select(timeout=timeout)
+            for key, mask in events:
+                obj = key.data
+                if mask & selectors.EVENT_READ:
+                    obj.handle_read_event()
+                if mask & selectors.EVENT_WRITE:
+                    obj.handle_write_event()
         return task.cont
 
+    def handle_read_event(self):
+        self.handle_accept()
+
     def handle_accept(self):
-        pair = self.accept()
-        if pair == None: return
-        sock, addr = pair
+        try:
+            sock, addr = self._sock.accept()
+        except OSError:
+            return
         RPCConnection(sock, self)
 
-class RPCConnection(asynchat.async_chat, FSM):
+class RPCConnection(_BufferedChat, FSM):
     def __init__(self, sock, server):
-        asynchat.async_chat.__init__(self, sock=sock)
+        _BufferedChat.__init__(self, sock)
         FSM.__init__(self, 'RPCConnection')
 
         self.server = server
 
-        # Defaults, in case stuff shows up before we switch states:
         self.data = ''
         self.found_terminator = lambda: None
 
@@ -113,7 +269,6 @@ class RPCConnection(asynchat.async_chat, FSM):
 
     def handle_close(self):
         self.demand('Off')
-        asynchat.async_chat.handle_close(self)
 
     def enterReadHeaders(self):
         self.data = ''
@@ -123,16 +278,12 @@ class RPCConnection(asynchat.async_chat, FSM):
     def __got_headers(self):
         self.set_terminator(None)
 
-        # We assume no keep-alive unless it's included specifically in the
-        # request:
         self.keepAlive = False
 
-        # Parse headers:
-        for i,line in enumerate(self.data.split('\n')):
+        for i, line in enumerate(self.data.split('\n')):
             line = line.rstrip('\r')
-            
+
             if i == 0:
-                # This is the HTTP request.
                 request = line.split(' ')
                 if len(request) != 3:
                     return self.demand('HTTPError', 400)
@@ -147,7 +298,6 @@ class RPCConnection(asynchat.async_chat, FSM):
 
                 self.path = path
             else:
-                # This is an HTTP header:
                 header = line.split(': ')
                 if len(header) != 2:
                     return self.demand('HTTPError', 400)
@@ -155,20 +305,16 @@ class RPCConnection(asynchat.async_chat, FSM):
                 key, value = tuple(header)
                 self.headers[key.lower()] = value
 
-        # Let's see if this == a keep-alive connection or not:
         if (self.headers.get('connection', '').lower() == 'keep-alive'):
             self.keepAlive = True
 
-        # Headers parsed; on to fulfillment!
         self.demand('ReceiveData')
 
     def enterReceiveData(self):
-        # Okay, so, we need to have a content-length, or we can't receive POST
-        # data.
         length = self.headers.get('content-length', '')
         if not length or not length.isdigit():
             return self.demand('HTTPError', 400)
-        
+
         length = int(length)
 
         self.data = ''
@@ -179,9 +325,7 @@ class RPCConnection(asynchat.async_chat, FSM):
     def __got_post(self):
         self.set_terminator(None)
 
-        # Since we now have the *full* request, we can now decide if we want to
-        # throw out the request based on headers and junk.
-        if self.server.auth != None:
+        if self.server.auth is not None:
             if self.headers.get('authorization') != 'Basic ' + self.server.auth:
                 return self.demand('HTTPError', 401)
 
@@ -218,59 +362,44 @@ class RPCConnection(asynchat.async_chat, FSM):
         except Exception:
             self.demand('JSONError', -1, PythonUtil.describeException())
         else:
-            if result != request: # Returning "request" signifies deference.
+            if result != request:
                 if request.active:
                     request.result(result)
 
-    
     def enterOff(self):
         self.setTimeout(None)
         self.close_when_done()
 
     def setTimeout(self, timeout):
-        # Sets a timeout, in seconds, that we will wait for before closing the
-        # connection.
-
-        if self.timeout != None:
+        if self.timeout is not None:
             self.timeout.remove()
 
-        if timeout != None:
+        if timeout is not None:
             self.timeout = taskMgr.doMethodLater(timeout, self.demand,
                                                  'RPCConnection-timeout-%d' % id(self),
                                                  extraArgs=['Off'])
 
     def sendResponse(self, body, contentType=None, code=200):
-        # First, look up a description for the code:
         description = http.client.responses.get(code, 'Code %d' % code)
 
-        # Prepare response:
         response =  'HTTP/1.1 %d %s\r\n' % (code, description)
-
-        # Add standard headers:
         response += 'Date: %s\r\n' % time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
         response += 'Server: OTP-RPCServer/0.3\r\n'
-
-        # Add content headers:
         response += 'Content-Length: %d\r\n' % len(body)
         if contentType:
             response += 'Content-Type: %s\r\n' % contentType
 
-        # Add authentication headers:
-        if self.server.auth != None:
-            # We take security seriously:
+        if self.server.auth is not None:
             response += 'WWW-Authenticate: Basic realm="OTP RPC server"\r\n'
 
-        # Add keep-alive headers:
         if self.keepAlive:
             response += 'Keep-Alive: timeout=%d\r\n' % rpc_server_keepalive.getValue()
             response += 'Connection: Keep-Alive\r\n'
         else:
             response += 'Connection: close\r\n'
 
-        # Finally, embed the body:
         response += '\r\n' + body
 
-        # Now send it off:
         self.push(response)
 
         if self.keepAlive:
@@ -281,40 +410,29 @@ class RPCConnection(asynchat.async_chat, FSM):
 
     def sendJSON(self, data):
         body = json.dumps(data) + '\n'
-
         self.sendResponse(body, 'application/json', 200)
 
-    # Error handlers:
     def enterHTTPError(self, code):
         self.server.notify.warning('Received bad HTTP request: Error code %d' % code)
-
-        # First, look up a description for the code:
         description = http.client.responses.get(code, 'Code %d' % code)
-
-        # Now we send our response:
-        self.sendResponse('%d %s\n' % (code, description),
-                          'text/plain', code)
+        self.sendResponse('%d %s\n' % (code, description), 'text/plain', code)
 
     def enterJSONError(self, code, message):
         self.server.notify.warning('Received bad JSON request: Error code %d' % code)
-
         response = {'jsonrpc': '2.0',
                     'error': {'code': code,
                               'message': message},
                     'id': self.id}
-
         self.sendJSON(response)
 
 class RPCRequest:
     def __init__(self, connection):
         self.connection = connection
-
         self.active = True
 
     def result(self, result):
         assert self.active
         self.active = False
-
         self.connection.sendJSON({'jsonrpc': '2.0',
                                   'result': result,
                                   'id': self.connection.id})
@@ -322,5 +440,4 @@ class RPCRequest:
     def error(self, code, message):
         assert self.active
         self.active = False
-
         self.connection.demand('JSONError', code, message)

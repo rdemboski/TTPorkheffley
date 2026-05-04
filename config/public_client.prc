@@ -4,8 +4,8 @@
 
 # Client settings
 window-title Toontown Rewritten [PRIVATE]
-server-version ttroff-beta-v2.12.2
-sync-video #f
+server-version ttph-v1.0.0
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -14,7 +14,7 @@ load-display pandagl
 
 
 # New Addons!
-want-WASD #t
+want-WASD #f
 tt-framerate #t
 want-new-ttrloader #t
 want-new-toonhall #t
@@ -39,6 +39,7 @@ vfs-mount phase_10.mf /
 vfs-mount phase_11.mf /
 vfs-mount phase_12.mf /
 vfs-mount phase_13.mf /
+vfs-mount custom.mf /
 default-model-extension .bam
 
 
