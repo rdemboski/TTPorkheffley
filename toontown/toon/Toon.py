@@ -479,6 +479,8 @@ def unloadDialog():
 class Toon(Avatar.Avatar, ToonHead):
     notify = DirectNotifyGlobal.directNotify.newCategory('Toon')
     afkTimeout = config.ConfigVariableInt('afk-timeout', 600).getValue()
+    # Subclasses (e.g. DistributedToon) override this with a full mapping.
+    CUSTOM_MODEL_ANIM_MAP: dict = {}
 
     def __init__(self):
         try:
@@ -579,6 +581,15 @@ class Toon(Avatar.Avatar, ToonHead):
         animStateList = self.animFSM.getStates()
         self.animFSM.enterInitialState()
         self.customModelActor = None
+
+    def loop(self, animName, restart=1, partName=None, fromFrame=None, toFrame=None):
+        result = Avatar.Avatar.loop(self, animName, restart, partName, fromFrame, toFrame)
+        # Mirror to the custom model actor for any full-body loop call.
+        # partName check skips partial animations (accessories, sub-parts, etc.)
+        if partName is None and self.customModelActor:
+            mapped = self.CUSTOM_MODEL_ANIM_MAP.get(animName, 'idle')
+            self._applyCustomModelAnim(mapped)
+        return result
 
     def stopAnimations(self):
         if hasattr(self, 'animFSM'):
@@ -1489,10 +1500,9 @@ class Toon(Avatar.Avatar, ToonHead):
                 self.stop()
                 self.loop(anim)
                 self.setPlayRate(rate, anim)
-                if hasattr(self, 'customModelActor') and self.customModelActor:
-                    if hasattr(self, 'CUSTOM_MODEL_ANIM_MAP'):
-                        mapped = self.CUSTOM_MODEL_ANIM_MAP.get(anim, 'idle')
-                        self._applyCustomModelAnim(mapped)
+                if self.customModelActor:
+                    mapped = self.CUSTOM_MODEL_ANIM_MAP.get(anim, 'idle')
+                    self._applyCustomModelAnim(mapped)
                 if self.isDisguised:
                     rightHand = self.suit.rightHand
                     numChildren = rightHand.getNumChildren()

@@ -924,6 +924,7 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         'jumpAirborne': 'idle',
         'jumpLand':     'idle',
         'dance':        'dance',
+        'victory':      'dance',
         'Happy':        'idle',
         'Sad':          'idle',
         'Sleep':        'idle',
