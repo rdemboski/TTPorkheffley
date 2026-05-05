@@ -1150,7 +1150,7 @@ dclass DistributedToon : DistributedPlayer {
   magicTeleportInitiate(uint32 hoodId, uint32 zoneId) ownrecv;
   keepAlive() ownsend airecv;
   setLastSeen(uint32 timestamp = 0) required db;
-  setCustomModel(uint16 modelId) broadcast ram ownrecv clsend;
+  setCustomModel(uint16 modelId) broadcast ram ownrecv ownsend airecv;
 };
 
 dclass DistributedCCharBase : DistributedObject {
