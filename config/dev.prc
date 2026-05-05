@@ -42,7 +42,7 @@ default-model-extension .bam
 
 
 # DC Files
-dc-file config/ttroff.dc
+dc-file config/ttph.dc
 
 
 # Server settings

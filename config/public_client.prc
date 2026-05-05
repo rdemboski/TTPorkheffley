@@ -3,7 +3,7 @@
 # Config.prc should be reproduced here.
 
 # Client settings
-window-title Toontown Rewritten [PRIVATE]
+window-title Toontown Porkheffley
 server-version ttph-v1.0.0
 sync-video #t
 want-dev #f
@@ -43,8 +43,8 @@ vfs-mount custom.mf /
 default-model-extension .bam
 
 
-# Now that we've loaded the phase files, tell panda to trust the TTROffCA
-# ssl-certificates /phase_3/etc/TTROffCA.crt
+# Now that we've loaded the phase files, tell panda to trust the TTPHCA
+# ssl-certificates /phase_3/etc/TTPHCA.crt
 
 
 # This is the shared secret for CSMUD login
@@ -53,7 +53,7 @@ csmud-secret VG9vbnRvd25SZXdyaXR0ZW5Qcml2YXRlQ2xpZW50U2VydmljZXNNYW5hZ2VyVWJlckR
 
 
 # DC Files
-#dc-file config/ttroff.dc Automatically wrapped into the code.
+#dc-file config/ttph.dc Automatically wrapped into the code.
 
 
 # Server settings

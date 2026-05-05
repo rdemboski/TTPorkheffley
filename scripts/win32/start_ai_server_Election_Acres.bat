@@ -1,5 +1,5 @@
 @echo off
-title Toontown Rewritten AI Service
+title Toontown Porkheffley AI Service
 cd ../..
 
 rem Read the contents of PPYTHON_PATH into %PPYTHON_PATH%:

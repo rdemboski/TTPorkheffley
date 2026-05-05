@@ -3,7 +3,7 @@
 # Config.prc should be reproduced here.
 
 # Client settings
-window-title Toontown Rewritten [OFFLINE]
+window-title Toontown Porkheffley
 server-version ttph-v1.0.0
 sync-video #f
 want-dev #f
@@ -42,7 +42,7 @@ default-model-extension .bam
 
 
 # DC Files
-#dc-file config/ttroff.dc Automatically wrapped into the code.
+#dc-file config/ttph.dc Automatically wrapped into the code.
 
 
 # Server settings

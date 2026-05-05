@@ -140,9 +140,9 @@ class DedicatedServer:
 
         else:
             if sys.platform == 'win32':
-                uberDogArguments = 'TTROFFEngine.exe --uberdog'
+                uberDogArguments = 'TTPHEngine.exe --uberdog'
             else:
-                uberDogArguments = 'TTROFFEngine --uberdog'
+                uberDogArguments = 'TTPHEngine --uberdog'
 
         if config.ConfigVariableBool('auto-start-server', True).getValue():
             gameServicesDialog['text'] = OTPLocalizer.CRLoadingGameServices + '\n\n' + OTPLocalizer.CRLoadingGameServicesUberdog
@@ -187,9 +187,9 @@ class DedicatedServer:
                 aiArguments = 'python3 -m toontown.ai.ServiceStartAI'
         else:
             if sys.platform == 'win32':
-                aiArguments = 'TTROFFEngine.exe --ai'
+                aiArguments = 'TTPHEngine.exe --ai'
             else:
-                aiArguments = 'TTROFFEngine --ai'
+                aiArguments = 'TTPHEngine --ai'
 
         if config.ConfigVariableBool('auto-start-server', True).getValue():
             gameServicesDialog['text'] = OTPLocalizer.CRLoadingGameServices + '\n\n' + OTPLocalizer.CRLoadingGameServicesAI
@@ -219,7 +219,7 @@ class DedicatedServer:
         self.notify.info('AI started successfully!')
 
         # Every aspect of the server has started. Let's finish with the done message.
-        self.notify.info('Server now ready. Have fun on Toontown Rewritten Offline!')
+        self.notify.info('Server now ready. Have fun on Toontown Porkheffley!')
         if self.localServer:
             messenger.send('localServerReady')
 

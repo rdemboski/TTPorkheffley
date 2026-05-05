@@ -1,5 +1,5 @@
 @echo off
-title Toontown Rewritten Dedicated Server
+title Toontown Porkheffley Dedicated Server
 cd ../../
 
 /usr/bin/python3 -m toontown.toonbase.DedicatedServerStart
