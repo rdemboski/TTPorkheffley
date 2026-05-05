@@ -578,6 +578,7 @@ class Toon(Avatar.Avatar, ToonHead):
          State('ScientistPlay', self.enterScientistPlay, self.enterScientistPlay)], 'off', 'off')
         animStateList = self.animFSM.getStates()
         self.animFSM.enterInitialState()
+        self.customModelActor = None
 
     def stopAnimations(self):
         if hasattr(self, 'animFSM'):
@@ -618,6 +619,9 @@ class Toon(Avatar.Avatar, ToonHead):
             self.hipsParts = None
             self.legsParts = None
             del self.animFSM
+            if self.customModelActor:
+                self.customModelActor.cleanup()
+                self.customModelActor = None
             for bookActor in self.__bookActors:
                 bookActor.cleanup()
 
@@ -841,6 +845,68 @@ class Toon(Avatar.Avatar, ToonHead):
         self.findAllMatches('**/boots_long').stash()
         self.findAllMatches('**/shoes').stash()
         return
+
+    def generateCustomModel(self, modelId):
+        if hasattr(self, 'customModelActor') and self.customModelActor:
+            self.customModelActor.cleanup()
+            self.customModelActor.removeNode()
+            self.customModelActor = None
+
+        if modelId == 0:
+            for lodName in self.getLODNames():
+                for part in ('legs', 'torso', 'head'):
+                    self.getPart(part, lodName).show()
+            self._customModelAnimTransforms = {}
+            return
+
+        if modelId == 1:
+            modelPath = 'custom/models/sora/sora_model.bam'
+            anims = {
+                'idle': 'custom/models/sora/sora-idle',
+                'walk': 'custom/models/sora/sora-walk',
+                'dance': 'custom/models/sora/sora-dance',
+                'swim': 'custom/models/sora/sora-swim'
+            }
+            animTransforms = {
+                'swim': {'hpr': (180, 270, 0)},
+            }
+        else:
+            self.notify.error('Unknown custom model id: %s' % modelId)
+            return
+
+        for lodName in self.getLODNames():
+            for part in ('legs', 'torso', 'head'):
+                self.getPart(part, lodName).hide()
+
+        self.customModelActor = Actor.Actor(modelPath, anims)
+        self.customModelActor.setScale(0.04)
+        self.customModelActor.setH(180)
+        self._customModelBaseHpr = (180, 0, 0)
+        self._customModelAnimTransforms = animTransforms
+        self.customModelActor.reparentTo(self.getGeomNode())
+        self.customModelActor.setBlend(frameBlend=config.ConfigVariableBool('want-smooth-animations', False).getValue())
+        self.customModelActor.loop('idle')
+
+    def _applyCustomModelAnim(self, animName):
+        """Loop animName on the custom model actor and apply any per-animation
+        transform override, resetting to the base HPR when there is none."""
+        if self.customModelActor.getCurrentAnim() == animName:
+            return
+        self.customModelActor.loop(animName)
+        # Always reset to base HPR first so overrides don't bleed into other anims
+        if hasattr(self, '_customModelBaseHpr'):
+            self.customModelActor.setHpr(*self._customModelBaseHpr)
+        if not hasattr(self, '_customModelAnimTransforms'):
+            return
+        override = self._customModelAnimTransforms.get(animName)
+        if not override:
+            return
+        if 'hpr' in override:
+            self.customModelActor.setHpr(*override['hpr'])
+        if 'pos' in override:
+            self.customModelActor.setPos(*override['pos'])
+        if 'scale' in override:
+            self.customModelActor.setScale(override['scale'])
 
     def swapToonLegs(self, legStyle, copy = 1):
         self.unparentToonParts()
@@ -1423,6 +1489,10 @@ class Toon(Avatar.Avatar, ToonHead):
                 self.stop()
                 self.loop(anim)
                 self.setPlayRate(rate, anim)
+                if hasattr(self, 'customModelActor') and self.customModelActor:
+                    if hasattr(self, 'CUSTOM_MODEL_ANIM_MAP'):
+                        mapped = self.CUSTOM_MODEL_ANIM_MAP.get(anim, 'idle')
+                        self._applyCustomModelAnim(mapped)
                 if self.isDisguised:
                     rightHand = self.suit.rightHand
                     numChildren = rightHand.getNumChildren()

@@ -2054,6 +2054,9 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
 
     def _stopZombieCheck(self):
         pass
+    
+    def requestCustomModel(self, modelId):
+        self.sendUpdate('setCustomModel', [modelId])
 
     # KeepAlive stuff
     def keepAliveCheck(self):
