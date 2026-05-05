@@ -304,7 +304,7 @@ class DedicatedServer:
         # And lastly, MongoDB
         if config.ConfigVariableBool('want-mongo-client', False).getValue():
             if self.mongoProcess:
-                self.astronProcess.terminate()
+                self.mongoProcess.terminate()
 
     @staticmethod
     def generateLog(logPrefix):

@@ -8,7 +8,6 @@ loadPrcFileData('private config', 'window-type none')
 # Settings (settings.json):
 from toontown.settings.ToontownSettings import ToontownSettings
 settings = ToontownSettings()
-settings.loadFromSettings()
 
 ShowBase()
 dedicatedServer = DedicatedServer(localServer=False)
