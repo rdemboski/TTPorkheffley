@@ -2,8 +2,8 @@ from panda3d.core import *
 import builtins
 import os
 
-if __debug__:
-    loadPrcFile('config/dev.prc')
+#if __debug__:
+loadPrcFile('config/dev.prc')
 
 # The VirtualFileSystem, which has already initialized, doesn't see the mount
 # directives in the config(s) yet. We have to force it to load those manually:
@@ -150,9 +150,9 @@ if not ConfigVariableBool('want-retro-rewritten', False):
     base.cr = cr
     loader.endBulkLoad('init')
 else:
-    # Prepare Music
+    # Prepare Music for old loading screen
     if base.musicManagerIsValid:
-        music = base.musicManager.getSound('phase_3/audio/bgm/ttr_theme.ogg')
+        music = base.musicManager.getSound('phase_3/audio/bgm/tt_theme.ogg')
         if music:
             music.setLoop(1)
             music.setVolume(0.8)
@@ -229,6 +229,13 @@ if config.ConfigVariableBool('auto-start-server', False).getValue():
 else:
     if not ConfigVariableBool('want-retro-rewritten', False):
         messenger.send('AllowPressKey')
+    else:
+        # Retro mode with a dedicated server: base.startShow is never called
+        # in the non-retro block above, so we must call it here.
+        if not launcher.isDummy():
+            base.startShow(cr, launcher.getGameServer())
+        else:
+            base.startShow(cr)
 
 if ConfigVariableBool('want-retro-rewritten', False):
     backgroundNodePath.reparentTo(hidden)
