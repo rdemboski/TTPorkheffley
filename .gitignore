@@ -16,3 +16,27 @@ files.py
 ai-crash.txt
 .claude/
 astron/mongo/
+build/
+TTPorkheffley.slnLaunch.user
+.vs/
+
+# TTPHLauncher - WPF launcher
+TTPHLauncher/bin/
+TTPHLauncher/obj/
+TTPHLauncher/TTPHLauncher.csproj.user
+
+# TTPHWebAPI - C# web backend
+TTPHWebAPI/ttph.db
+TTPHWebAPI/ttph.db-*
+TTPHWebAPI/bin/
+TTPHWebAPI/obj/
+TTPHWebAPI.csproj.user
+
+# Visual Studio publish profiles
+*.pubxml
+*.pubxml.user
+
+# Explicitly un-ignore below files
+!TTPHWebAPI/appsettings.json
+!TTPHWebAPI/appsettings.Development.json
+!TTPHLauncher/launcher.json

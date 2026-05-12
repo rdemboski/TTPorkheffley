@@ -126,7 +126,6 @@ class ChatInputNormal(DirectObject.DirectObject):
                 return str(exception)
 
     def cancelButtonPressed(self):
-        self.chatEntry.set('')
         self.chatMgr.fsm.request('mainMenu')
 
     def chatButtonPressed(self):

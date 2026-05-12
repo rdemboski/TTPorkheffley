@@ -1,4 +1,4 @@
-# This is the PRC configuration file for a published TTR client. Note that only
+# This is the PRC configuration file for a published TTPH client. Note that only
 # this file and Panda3D's Confauto.prc are included. Any relevant directives in
 # Config.prc should be reproduced here.
 
@@ -15,7 +15,7 @@ load-display pandagl
 
 # New Addons!
 want-WASD #f
-tt-framerate #t
+tt-framerate #f
 want-new-ttrloader #t
 want-new-toonhall #t
 want-max-font #t
@@ -57,6 +57,8 @@ csmud-secret VG9vbnRvd25SZXdyaXR0ZW5Qcml2YXRlQ2xpZW50U2VydmljZXNNYW5hZ2VyVWJlckR
 
 
 # Server settings
+accountdb-type web
+account-server-api https://ttph.azurewebsites.net
 want-rpc-server #f
 rpc-server-endpoint http://localhost:8080/
 eventlog-host 127.0.0.1

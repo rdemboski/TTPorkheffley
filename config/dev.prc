@@ -16,7 +16,7 @@ default-directnotify-level info
 
 # New Addons!
 want-WASD #f
-tt-framerate #t
+tt-framerate #f
 want-new-toonhall #t
 want-max-font #t
 want-ttc-television #f

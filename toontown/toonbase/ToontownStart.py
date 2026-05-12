@@ -2,8 +2,8 @@ from panda3d.core import *
 import builtins
 import os
 
-#if __debug__:
-loadPrcFile('config/dev.prc')
+if __debug__:
+    loadPrcFile('config/dev.prc')
 
 # The VirtualFileSystem, which has already initialized, doesn't see the mount
 # directives in the config(s) yet. We have to force it to load those manually:

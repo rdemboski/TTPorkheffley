@@ -1,11 +1,11 @@
-# This is the PRC configuration file for a published TTR client. Note that only
+# This is the PRC configuration file for a published TTPH client. Note that only
 # this file and Panda3D's Confauto.prc are included. Any relevant directives in
 # Config.prc should be reproduced here.
 
 # Client settings
 window-title Toontown Porkheffley
 server-version ttph-v1.0.0
-sync-video #f
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -14,8 +14,8 @@ load-display pandagl
 
 
 # New Addons!
-want-WASD #t
-tt-framerate #t
+want-WASD #f
+tt-framerate #f
 want-new-toonhall #t
 want-max-font #t
 
@@ -46,6 +46,8 @@ default-model-extension .bam
 
 
 # Server settings
+accountdb-type web
+account-server-api https://ttph.azurewebsites.net
 want-rpc-server #f
 rpc-server-endpoint http://localhost:8080/
 eventlog-host 127.0.0.1

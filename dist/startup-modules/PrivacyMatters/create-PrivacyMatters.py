@@ -1,12 +1,14 @@
-configfile = open('../../../config/private_client.prc', 'r')
-configlines = configfile.read()
-configlines = configlines.encode('utf-8')
-data = 'CONFIGFILE = %s' % configlines + '\n'
+import os
 
-dcfile = open('../../../config/ttph.dc', 'r')
-dclines = dcfile.read()
-dclines = dclines.encode('utf-8')
-data += 'DCFILE = %s' % dclines
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.normpath(os.path.join(script_dir, '..', '..', '..'))
 
-finalfile = open('../../../PrivacyMatters.py', 'w+')
-finallines = finalfile.write(data)
+configlines = open(os.path.join(project_root, 'config', 'private_client.prc'), 'r').read()
+data = 'CONFIGFILE = %s\n' % configlines.encode('utf-8')
+
+dclines = open(os.path.join(project_root, 'config', 'ttph.dc'), 'r').read()
+data += 'DCFILE = %s\n' % dclines.encode('utf-8')
+
+out = os.path.join(project_root, 'PrivacyMatters.py')
+open(out, 'w').write(data)
+print('Wrote %s' % out)
