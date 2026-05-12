@@ -213,17 +213,28 @@ class ToonBase(OTPBase.OTPBase):
         searchPath = DSearchPath()
         searchPath.appendDirectory(Filename('/phase_3/etc'))
 
-        for filename in ['toonmono.cur', 'icon.ico']:
+        # Support both animated (.ani) and static (.cur) cursors.
+        cursorFile = None
+        for candidate in ['cursor.ani', 'cursor.cur', 'toonmono.cur']:
+            p3filename = Filename(candidate)
+            if vfs.resolveFilename(p3filename, searchPath):
+                cursorFile = candidate
+                break
+
+        if cursorFile is None:
+            return
+
+        for filename in [cursorFile, 'icon.ico']:
             p3filename = Filename(filename)
             found = vfs.resolveFilename(p3filename, searchPath)
             if not found:
-                return # Can't do anything past this point.
+                return
 
             with open(os.path.join(tempdir, filename), 'wb') as f:
                 f.write(vfs.readFile(p3filename, False))
 
         wp = WindowProperties()
-        wp.setCursorFilename(Filename.fromOsSpecific(os.path.join(tempdir, 'toonmono.cur')))
+        wp.setCursorFilename(Filename.fromOsSpecific(os.path.join(tempdir, cursorFile)))
         wp.setIconFilename(Filename.fromOsSpecific(os.path.join(tempdir, 'icon.ico')))
         self.win.requestProperties(wp)
 

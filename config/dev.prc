@@ -92,5 +92,5 @@ mega-invasion-cog-type tm
 
 
 # Working (Custom) Addons!
-want-toonfest #t
+want-toonfest #f
 want-doomsday #f

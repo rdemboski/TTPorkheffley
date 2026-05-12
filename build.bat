@@ -192,6 +192,7 @@ echo.
     --include-module=files ^
     --lto=no ^
     --windows-console-mode=disable ^
+    --windows-icon-from-ico="resources\phase_3\etc\icon.ico" ^
     --output-dir=build ^
     --jobs=%BUILD_JOBS% ^
     %VCRT_FLAGS% ^

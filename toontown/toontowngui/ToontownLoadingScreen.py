@@ -19,6 +19,8 @@ class ToontownLoadingScreen:
          1.06,
          -0.03,
          0.03), pos=(0, 0, -0.85), text='')
+        self.wynaut = OnscreenImage(image='phase_3/maps/wynaut.png', parent=self.gui, pos=(0, 0, 0.1), scale=0.5)
+        self.wynaut.setTransparency(TransparencyAttrib.MAlpha)
         self.head = None
 
         # This will bring up the placer panel, which is useful for positioning objects but also rather buggy.
@@ -34,6 +36,7 @@ class ToontownLoadingScreen:
         self.starring.destroy()
         self.title.destroy()
         self.waitBar.destroy()
+        self.wynaut.destroy()
         #self.banner.removeNode()
         self.gui.removeNode()
 
@@ -49,13 +52,8 @@ class ToontownLoadingScreen:
         if gui:
             base.setBackgroundColor(Vec4(0.952, 0.796, 0.317, 1))
             if base.localAvatarStyle:
-                from toontown.toon import ToonHead
                 self.toon['text'] = base.localAvatarName
-                self.starring['text'] = TTLocalizer.StarringIn                
-                self.head = ToonHead.ToonHead()
-                self.head.setupHead(base.localAvatarStyle, forGui=1)
-                self.head.reparentTo(self.gui)
-                self.head.fitAndCenterHead(1, forGui=1)
+                self.starring['text'] = TTLocalizer.StarringIn
             self.gui.reparentTo(aspect2dp)
         else:
             self.waitBar.reparentTo(aspect2dp)
