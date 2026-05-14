@@ -1,6 +1,9 @@
-
 <h1 align="center">Toontown Porkheffley</h1>
 <p align="center"><em>A modern, TTR-inspired Toontown private server</em></p>
+
+<p align="center">
+  <img src="wynaut.png" alt="Wynaut" width="180"/>
+</p>
 
 <p align="center">
   
