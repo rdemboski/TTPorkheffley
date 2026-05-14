@@ -1,13 +1,14 @@
-<div align="center">
-	<h1>Toontown Porkheffley</h1>
-	<p><em>A modern, TTR-inspired Toontown private server</em></p>
+
+<h1 align="center">Toontown Porkheffley</h1>
+<p align="center"><em>A modern, TTR-inspired Toontown private server</em></p>
+
+<p align="center">
   
-	<p>
-		<img src="https://img.shields.io/badge/Python-3.13.13-blue?logo=python" alt="Python">
-		<img src="https://img.shields.io/badge/Panda3D-1.10.16-green?logo=panda3d" alt="Panda3D">
-		<img src="https://img.shields.io/badge/Astron-latest-orange" alt="Astron">
-	</p>
-</div>
+  ![Python](https://img.shields.io/badge/Python-3.13.13-blue?logo=python)
+  ![Panda3D](https://img.shields.io/badge/Panda3D-1.10.16-green?logo=panda3d)
+  ![Astron](https://img.shields.io/badge/Astron-latest-orange)
+
+</p>
 
 ---
 
