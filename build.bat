@@ -230,7 +230,10 @@ echo [Post] Writing default settings.json...
     echo     "mongodb-client": false,
     echo     "smoothanimations": true,
     echo     "elections": false,
-    echo     "retro-rewritten": false
+    echo     "retro-rewritten": false,
+    echo     "music-vol": 100,
+    echo     "sfx-vol": 100,
+    echo     "toon-chat-sounds": true
     echo   }
     echo }
 ) > "build\PrivacyStart.dist\settings.json"
