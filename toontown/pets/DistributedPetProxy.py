@@ -131,16 +131,15 @@ class DistributedPetProxy(DistributedObject.DistributedObject):
             self.__dict__[setterName](value)
 
     def announceGenerate(self):
+        print('PETPROXY CLIENT announceGenerate doId=%s' % self.doId)
         DistributedObject.DistributedObject.announceGenerate(self)
         self.traits = PetTraits.PetTraits(self.traitSeed, self.safeZone)
-        print(self.traits.traits)
         self.mood = PetMood.PetMood(self)
         self.lastKnownMood = self.mood.makeCopy()
         for mood, value in list(self.requiredMoodComponents.items()):
             self.mood.setComponent(mood, value, announce=0)
 
         self.requiredMoodComponents = {}
-        DistributedPetProxy.notify.debug('time since last seen: %s' % self.getTimeSinceLastSeen())
         self.style = [self.head,
          self.ears,
          self.nose,
@@ -153,6 +152,7 @@ class DistributedPetProxy(DistributedObject.DistributedObject):
         self.setLastSeenTimestamp(self.lastSeenTimestamp)
         self.updateOfflineMood()
         self.sendGenerateMessage = 1
+        print('PETPROXY CLIENT announceGenerate complete, sendGenerateMessage=1')
 
     def disable(self):
         if hasattr(self, 'lastKnownMood'):
@@ -170,9 +170,11 @@ class DistributedPetProxy(DistributedObject.DistributedObject):
         DistributedObject.DistributedObject.delete(self)
 
     def setDominantMood(self, dominantMood):
+        print('PETPROXY CLIENT setDominantMood doId=%s mood=%s sendGenerateMessage=%s' % (self.doId, dominantMood, self.sendGenerateMessage))
         self.dominantMood = dominantMood
         if self.sendGenerateMessage == 1:
             proxyGenerateMessage = 'petProxy-%d-generated' % self.doId
+            print('PETPROXY CLIENT firing %s' % proxyGenerateMessage)
             messenger.send(proxyGenerateMessage)
             self.sendGenerateMessage = 0
 

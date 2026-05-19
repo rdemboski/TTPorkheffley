@@ -1,4 +1,8 @@
 from panda3d.core import *
+try:
+    from panda3d.core import ActorNode, PhysicsManager, LinearEulerIntegrator, ForceNode, LinearFrictionForce, LinearVectorForce, PhysicsCollisionHandler, CollisionHandlerGravity
+except ImportError:
+    pass  # Classic physics not available in this Panda3D build
 from direct.distributed.ClockDelta import *
 from direct.interval.IntervalGlobal import *
 from direct.gui.DirectGui import *
@@ -183,25 +187,12 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
 
     def setupPhysics(self):
         self.__setupCollisions()
-        self.physicsMgr = PhysicsManager()
+        # Manual velocity simulation (classic Panda3D physics not available in this build)
+        self._velocity = Vec3(0, 0, 0)
+        self._engineAccel = 0
+        self._windResistanceCoef = 0.2
         self.physicsEpoch = globalClock.getFrameTime()
         self.lastPhysicsFrame = 0
-        integrator = LinearEulerIntegrator()
-        self.physicsMgr.attachLinearIntegrator(integrator)
-        fn = ForceNode('windResistance')
-        fnp = NodePath(fn)
-        fnp.reparentTo(render)
-        windResistance = LinearFrictionForce(0.2)
-        fn.addForce(windResistance)
-        self.physicsMgr.addLinearForce(windResistance)
-        self.windResistance = windResistance
-        fn = ForceNode('engine')
-        fnp = NodePath(fn)
-        fnp.reparentTo(self)
-        engine = LinearVectorForce(0, 0, 0)
-        fn.addForce(engine)
-        self.physicsMgr.addLinearForce(engine)
-        self.engine = engine
 
     def disable(self):
         DistributedVehicle.AvId2kart.pop(self.ownerId)
@@ -212,7 +203,6 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         if self.localVehicle:
             self.__disableCollisions()
             self.__undoCollisions()
-            self.physicsMgr.clearLinearForces()
         self.detachNode()
         DistributedSmoothNode.DistributedSmoothNode.disable(self)
         taskMgr.remove('slidePies')
@@ -228,7 +218,7 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
                     del piece
 
     def getVelocity(self):
-        return self.actorNode.getPhysicsObject().getVelocity()
+        return getattr(self, '_velocity', Vec3(0, 0, 0))
 
     def __updateWallCollision(self, entry = None):
         vol = self.curSpeed / 160
@@ -243,7 +233,7 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         self.wallCollideTrack = Parallel(Func(self.wallHitsSfx[hitToPlay].play))
         self.__updateWallCollision()
         self.wallCollideTrack.start()
-        curSpeed = self.actorNode.getPhysicsObject().getVelocity().length()
+        curSpeed = self._velocity.length()
         if self.wantSparks and curSpeed > 10:
             if entry.getSurfaceNormal(self)[0] < 0:
                 self.fireSparkParticles('right')
@@ -264,12 +254,11 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         cs = CollisionSphere(0, 0, 4, 4)
         self.collisionNode.addSolid(cs)
         self.collisionNodePath = NodePath(self.collisionNode)
-        self.wallHandler = PhysicsCollisionHandler()
-        self.wallHandler.setStaticFrictionCoef(0.0)
-        self.wallHandler.setDynamicFrictionCoef(0.1)
+        # Use CollisionHandlerPusher (PhysicsCollisionHandler not available in this build)
+        self.wallHandler = CollisionHandlerPusher()
         self.wallHandler.addCollider(self.collisionNodePath, self)
-        self.wallHandler.setInPattern('enterWallCollision')
-        self.wallHandler.setOutPattern('exitWallCollision')
+        self.wallHandler.addInPattern('enterWallCollision')
+        self.wallHandler.addOutPattern('exitWallCollision')
         self.cWallTrav.addCollider(self.collisionNodePath, self.wallHandler)
         self.accept('enterWallCollision', self.__wallCollisionStart)
         self.accept('exitWallCollision', self.__wallCollisionStop)
@@ -279,8 +268,12 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         cRayNode.setFromCollideMask(OTPGlobals.FloorBitmask)
         cRayNode.setIntoCollideMask(BitMask32.allOff())
         self.cRayNodePath = self.attachNewNode(cRayNode)
-        self.lifter = CollisionHandlerGravity()
-        self.lifter.setGravity(32.174 * 3.0)
+        # CollisionHandlerGravity is in the collide module; fall back to CollisionHandlerFloor
+        try:
+            self.lifter = CollisionHandlerGravity()
+            self.lifter.setGravity(32.174 * 3.0)
+        except NameError:
+            self.lifter = CollisionHandlerFloor()
         self.lifter.addInPattern('floorCollision')
         self.lifter.addAgainPattern('floorCollision')
         self.lifter.setOffset(OTPGlobals.FloorOffset)
@@ -500,7 +493,6 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         if self.localVehicle:
             camera.reparentTo(self.cameraNode)
             camera.setPosHpr(0, -33, 16, 0, -10, 0)
-            self.physicsMgr.attachPhysicalNode(self.node())
             self.__enableControlInterface()
             self.__createPieWindshield()
             self.startPosHprBroadcast()
@@ -516,7 +508,6 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         if self.localVehicle:
             self.stopPosHprBroadcast()
             self.__disableControlInterface()
-            self.physicsMgr.removePhysicalNode(self.node())
             self.cleanupParticles()
             camera.reparentTo(localAvatar)
             camera.setPos(localAvatar.cameraPositions[0][0])
@@ -744,7 +735,7 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         if not self.localVehicle:
             dist = (self.getPos() - localAvatar.getPos()).length()
         if self.localVehicle:
-            if self.lifter.isOnGround():
+            if hasattr(self.lifter, 'isOnGround') and self.lifter.isOnGround():
                 if self.offGround > 10:
                     kart = self.geom[0].find('**/main*')
                     bumpDown1 = kart.posInterval(0.1, Vec3(0, 0, -1))
@@ -836,7 +827,7 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
 
     def __watchControls(self, task):
         dt = globalClock.getDt()
-        curVelocity = self.actorNode.getPhysicsObject().getVelocity()
+        curVelocity = Vec3(self._velocity)
         curSpeed = curVelocity.length()
         fvec = self.forward.getPos(render) - self.getPos(render)
         fvec.normalize()
@@ -884,7 +875,7 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
                     self.acceleration = self.arrowVert * self.accelerationMult * self.cheatFactor * 0.5
             if self.turbo:
                 self.acceleration += self.accelerationMult * 1.5
-        self.engine.setVector(Vec3(0, self.acceleration, 0))
+        self._engineAccel = self.acceleration
         if self.groundType == 'ice':
             rotMat = Mat3.rotateMatNormaxis(newHForTurning, Vec3.up())
         else:
@@ -895,7 +886,7 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
         onScreenDebug.append('vehicle curHeading = %s\n' % curHeading.pPrintValues())
         onScreenDebug.append('vehicle H = %s  newHForTurning=%f\n' % (self.getH(), newHForTurning))
         windResistance = self.surfaceModifiers[self.groundType]['windResistance']
-        self.windResistance.setCoef(windResistance)
+        self._windResistanceCoef = windResistance
         physicsFrame = int((globalClock.getFrameTime() - self.physicsEpoch) * self.physicsCalculationsPerSecond)
         numFrames = min(physicsFrame - self.lastPhysicsFrame, self.maxPhysicsFrames)
         self.lastPhysicsFrame = physicsFrame
@@ -908,8 +899,13 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
             if self.skidding:
                 driftMin = self.surfaceModifiers[self.groundType]['driftMin']
         for i in range(int(numFrames)):
-            self.physicsMgr.doPhysics(self.physicsDt)
-            curVelocity = self.actorNode.getPhysicsObject().getVelocity()
+            # Manual physics: apply engine force and wind resistance, then integrate position
+            engineForceWorld = curHeading * self._engineAccel
+            self._velocity = self._velocity + (engineForceWorld - self._velocity * self._windResistanceCoef) * self.physicsDt
+            # Update XY only — Z is managed by the floor collision system (lifter)
+            self.setX(self.getX() + self._velocity.getX() * self.physicsDt)
+            self.setY(self.getY() + self._velocity.getY() * self.physicsDt)
+            curVelocity = Vec3(self._velocity)
             idealVelocity = curHeading * curSpeed
             curVelocity *= self.imHitMult
             driftVal = abs(self.leanAmount) * 16 / self.cheatFactor + 15 / self.cheatFactor
@@ -917,7 +913,7 @@ class DistributedVehicle(DistributedSmoothNode.DistributedSmoothNode, Kart.Kart,
             curSpeed = curVelocity.length()
             curVelocity.normalize()
             curVelocity *= min(curSpeed, 600)
-            self.actorNode.getPhysicsObject().setVelocity(curVelocity)
+            self._velocity = curVelocity
             curSpeed = curVelocity.length()
             speedFactor = min(curSpeed, 150) / 162.0
             self.leanAmount = (self.leanAmount + leanIncrement) * speedFactor

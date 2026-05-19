@@ -14,8 +14,11 @@ class DistCogdoMazeGame(DistCogdoGame, DistCogdoMazeGameBase):
         DistCogdoGame.__init__(self, cr)
         self.game = CogdoMazeGame(self)
         self._numSuits = (0, 0, 0)
-        if __debug__ and config.ConfigVariableBool('schellgames-dev', True).getValue():
+        if __debug__ and config.ConfigVariableBool('schellgames-dev', False).getValue():
             self.accept('onCodeReload', self.__sgOnCodeReload)
+
+    def __sgOnCodeReload(self):
+        pass
 
     def delete(self):
         del self.randomNumGen
@@ -34,7 +37,13 @@ class DistCogdoMazeGame(DistCogdoGame, DistCogdoMazeGameBase):
 
     def placeEntranceElev(self, elev):
         DistCogdoGame.placeEntranceElev(self, elev)
-        self.game.placeEntranceElevator(elev)
+        # _handleGotInterior calls this synchronously from announceGenerate,
+        # before loadFSM.request('Loaded') runs game.load() and creates
+        # self.game.maze.  Store the elevator and apply it once the maze exists.
+        self._pendingEntranceElev = elev
+        if getattr(self.game, 'maze', None) is not None:
+            self.game.placeEntranceElevator(elev)
+            self._pendingEntranceElev = None
 
     def _gameInProgress(self):
         return self.fsm.getCurrentState().getName() == 'Game'
@@ -49,6 +58,11 @@ class DistCogdoMazeGame(DistCogdoGame, DistCogdoMazeGameBase):
                 bossCode += '%X' % self.randomNumGen.randint(0, 15)
 
         self.game.load(mazeFactory, self._numSuits, bossCode)
+        # Apply any entrance elevator that arrived before the maze was loaded.
+        elev = getattr(self, '_pendingEntranceElev', None)
+        if elev is not None:
+            self.game.placeEntranceElevator(elev)
+            self._pendingEntranceElev = None
         return
 
     def exitLoaded(self):
@@ -59,6 +73,12 @@ class DistCogdoMazeGame(DistCogdoGame, DistCogdoMazeGameBase):
     def enterVisible(self):
         DistCogdoGame.enterVisible(self)
         self.game.initPlayers()
+        # Remove the level-model backdrop BEFORE onstaging real geometry so
+        # there is never a single frame where both models are visible at once.
+        interior = self.getInterior()
+        if interior is not None and interior.floorModel is not None:
+            interior.floorModel.removeNode()
+            interior.floorModel = None
         self.game.onstage()
 
     def exitVisible(self):

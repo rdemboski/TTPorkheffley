@@ -157,13 +157,15 @@ def main():
         print(f"ERROR: no .mf files found in {scan_dir}. Aborting to avoid overwriting a good manifest.", file=sys.stderr)
         sys.exit(1)
 
-    # Always append TTPHEngine.exe and settings.json if they exist.
+    # Always append TTPHEngine.exe if it exists.
+    # settings.json is intentionally excluded — each user maintains their own
+    # local copy so that preferences (volume, display, etc.) are not overwritten
+    # on game updates.
     all_files = list(mf_files)
-    for extra in ("TTPHEngine.exe", "settings.json"):
-        if os.path.isfile(os.path.join(scan_dir, extra)):
-            all_files.append(extra)
-        else:
-            print(f"WARNING: {extra} not found in {scan_dir}, skipping.", file=sys.stderr)
+    if os.path.isfile(os.path.join(scan_dir, "TTPHEngine.exe")):
+        all_files.append("TTPHEngine.exe")
+    else:
+        print("WARNING: TTPHEngine.exe not found in %s, skipping." % scan_dir, file=sys.stderr)
 
     out_path = args.out or os.path.join(scan_dir, "manifest.txt")
     version = args.version

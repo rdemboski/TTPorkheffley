@@ -16,6 +16,7 @@ from direct.showbase.PythonUtil import fitDestAngle2Src
 from direct.fsm.StatePush import StateVar, FunctionCall
 from toontown.toonbase import TTLocalizer
 from toontown.toonbase import ToontownGlobals
+from otp.otpbase import OTPGlobals
 from toontown.effects import Splash
 from toontown.minigame.MinigamePowerMeter import MinigamePowerMeter
 from toontown.minigame.ArrowKeys import ArrowKeys
@@ -175,11 +176,11 @@ class DistributedPartyTugOfWarActivity(DistributedPartyTeamActivity):
         self.joinCollisionNodePaths = []
         for i in range(len(PartyGlobals.TeamActivityTeams)):
             collShape = CollisionTube(PartyGlobals.TugOfWarJoinCollisionEndPoints[0], PartyGlobals.TugOfWarJoinCollisionEndPoints[1], PartyGlobals.TugOfWarJoinCollisionRadius)
-            collShape.setTangible(True)
+            collShape.setTangible(False)
             self.joinCollision.append(CollisionNode('TugOfWarJoinCollision%d' % i))
             self.joinCollision[i].addSolid(collShape)
             tubeNp = self.playArea.attachNewNode(self.joinCollision[i])
-            tubeNp.node().setCollideMask(ToontownGlobals.WallBitmask)
+            tubeNp.node().setIntoCollideMask(OTPGlobals.WallBitmask)
             self.joinCollisionNodePaths.append(tubeNp)
             self.joinCollisionNodePaths[i].setPos(PartyGlobals.TugOfWarJoinCollisionPositions[i])
 
@@ -329,7 +330,7 @@ class DistributedPartyTugOfWarActivity(DistributedPartyTeamActivity):
 
     def __enableCollisions(self):
         for i in range(len(PartyGlobals.TeamActivityTeams)):
-            self.accept('enterTugOfWarJoinCollision%d' % i, getattr(self, '_join%s' % PartyGlobals.TeamActivityTeams.getString(i)))
+            self.accept('enterTugOfWarJoinCollision%d' % i, getattr(self, '_join%s' % PartyGlobals.TeamActivityTeams(i).name))
 
     def __disableCollisions(self):
         for i in range(len(PartyGlobals.TeamActivityTeams)):
@@ -662,7 +663,7 @@ class DistributedPartyTugOfWarActivity(DistributedPartyTeamActivity):
                     self.sendUpdate('reportFallIn', [losingTeam])
 
     def throwTeamInWater(self, losingTeam):
-        self.notify.debug('throwTeamInWater( %s )' % PartyGlobals.TeamActivityTeams.getString(losingTeam))
+        self.notify.debug('throwTeamInWater( %s )' % PartyGlobals.TeamActivityTeams(losingTeam).name)
         splashSet = False
         for toonId in self.toonIds[losingTeam]:
             self.fallenToons.append(toonId)

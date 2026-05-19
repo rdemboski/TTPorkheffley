@@ -108,6 +108,9 @@ class CogdoExecutiveSuiteIntro(CogdoGameMovie):
         return
 
     def _setCamTarget(self, targetNP, distance, offset = Point3(0, 0, 0), angle = Point3(0, 0, 0)):
+        if targetNP is None:
+            self.notify.warning('_setCamTarget: targetNP is None; skipping camera move')
+            return
         camera.wrtReparentTo(render)
         self._camTarget = targetNP
         self._camOffset = offset

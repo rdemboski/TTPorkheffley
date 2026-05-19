@@ -9,3 +9,7 @@ class BaseActivityFSM(FSM):
         self.activity = activity
         self.defaultTransitions = None
         return
+
+    def requestFinalState(self):
+        """Mirror ClassicFSM.requestFinalState() for code that calls it generically."""
+        self.request('Final')

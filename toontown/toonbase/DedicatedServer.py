@@ -140,9 +140,9 @@ class DedicatedServer:
 
         else:
             if sys.platform == 'win32':
-                uberDogArguments = 'TTPHEngine.exe --uberdog'
+                uberDogArguments = '%s -O -m toontown.uberdog.ServiceStartUD' % open('PPYTHON_PATH').read()
             else:
-                uberDogArguments = 'TTPHEngine --uberdog'
+                uberDogArguments = 'python3 -O -m toontown.uberdog.ServiceStartUD'
 
         if config.ConfigVariableBool('auto-start-server', True).getValue():
             gameServicesDialog['text'] = OTPLocalizer.CRLoadingGameServices + '\n\n' + OTPLocalizer.CRLoadingGameServicesUberdog
@@ -187,9 +187,9 @@ class DedicatedServer:
                 aiArguments = 'python3 -m toontown.ai.ServiceStartAI'
         else:
             if sys.platform == 'win32':
-                aiArguments = 'TTPHEngine.exe --ai'
+                aiArguments = '%s -O -m toontown.ai.ServiceStartAI' % open('PPYTHON_PATH').read()
             else:
-                aiArguments = 'TTPHEngine --ai'
+                aiArguments = 'python3 -O -m toontown.ai.ServiceStartAI'
 
         if config.ConfigVariableBool('auto-start-server', True).getValue():
             gameServicesDialog['text'] = OTPLocalizer.CRLoadingGameServices + '\n\n' + OTPLocalizer.CRLoadingGameServicesAI

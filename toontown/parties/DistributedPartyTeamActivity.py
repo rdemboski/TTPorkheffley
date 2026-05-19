@@ -148,6 +148,10 @@ class DistributedPartyTeamActivity(DistributedPartyActivity):
         DistributedPartyActivity.setState(self, newState, timestamp)
         if newState == 'WaitToStart':
             self.activityFSM.request(newState, timestamp)
+        elif newState == 'WaitClientsReady':
+            # Server-side WaitClientsReady maps to the client-side Rules state
+            # (shows rules panel / countdown before the game starts)
+            self.activityFSM.request('Rules')
         elif newState == 'Conclusion':
             self.activityFSM.request(newState, data)
         else:

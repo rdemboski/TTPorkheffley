@@ -43,9 +43,9 @@ class Spellbook:
         try:
             return self.doWord(word, args)
         except MagicError as e:
-            return str(e)
+            return (str(e), False)
         except Exception:
-            return traceback.format_exc()
+            return (traceback.format_exc(), False)
         finally:
             self.currentInvoker = None
             self.currentTarget = None

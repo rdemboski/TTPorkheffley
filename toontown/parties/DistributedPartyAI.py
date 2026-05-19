@@ -43,8 +43,13 @@ class DistributedPartyAI(DistributedObjectAI):
         self.partyState = 0
         self.avIdsAtParty = []
         # apparently 'partyclockinfo' is the xyz on the party grid
+        self.partyClockInfo = (0, 0, 0)  # default in case PartyClock isn't present
         for activity in self.info['activities']:
-            if activity[0] == ActivityIds.PartyClock:
+            try:
+                actId = ActivityIds(activity[0])
+            except (ValueError, KeyError):
+                actId = activity[0]
+            if actId == ActivityIds.PartyClock:
                 self.partyClockInfo = (activity[1], activity[2], activity[3])
 
         # We'll need to inform the UD later of the host's name so other public parties know the host. Maybe we know who he is..
@@ -71,7 +76,10 @@ class DistributedPartyAI(DistributedObjectAI):
             ActivityIds.PartyCog: DistributedPartyCogActivityAI,
         }
         for activity in self.info['activities']:
-            actId = activity[0]
+            try:
+                actId = ActivityIds(activity[0])
+            except (ValueError, KeyError):
+                actId = activity[0]
             if actId in actId2Class:
                 act = actId2Class[actId](self.air, self.doId, activity)
                 act.generateWithRequired(self.zoneId)
@@ -107,11 +115,16 @@ class DistributedPartyAI(DistributedObjectAI):
 
     def b_setPartyState(self, partyState):
         self.partyState = partyState
-        self.sendUpdate('setPartyState', [partyState])
+        stateVal = partyState.value if hasattr(partyState, 'value') else int(partyState)
+        self.sendUpdate('setPartyState', [stateVal])
 
     def _formatParty(self, partyDict, status=PartyStatus.Started):
         start = partyDict['start']
         end = partyDict['end']
+        statusVal = status.value if hasattr(status, 'value') else int(status)
+        inviteThemeVal = partyDict['inviteTheme']
+        if hasattr(inviteThemeVal, 'value'):
+            inviteThemeVal = inviteThemeVal.value
         return [partyDict['partyId'],
                 partyDict['hostId'],
                 start.year,
@@ -125,10 +138,10 @@ class DistributedPartyAI(DistributedObjectAI):
                 end.hour,
                 end.minute,
                 partyDict['isPrivate'],
-                partyDict['inviteTheme'],
+                inviteThemeVal,
                 partyDict['activities'],
                 partyDict['decorations'],
-                status]
+                statusVal]
     def getPartyInfoTuple(self):
         return self._formatParty(self.info)
 

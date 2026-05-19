@@ -42,6 +42,9 @@ class DistributedPartyActivityAI(DistributedObjectAI):
     def getPartyDoId(self):
         return self.parent_
 
+    def getToonsPlaying(self):
+        return list(self.toonsPlaying)
+
     def updateToonsPlaying(self):
         self.sendUpdate('setToonsPlaying', [self.toonsPlaying])
 

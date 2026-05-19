@@ -263,6 +263,20 @@ class EstateManagerAI(DistributedObjectAI):
         self.toon2estate = {}
         self.estate2timeout = {}
 
+    def getOwnerFromZone(self, zoneId):
+        """Return the doId of the toon that owns the estate in zoneId, or None."""
+        for toon, estate in list(self.toon2estate.items()):
+            if estate.zoneId == zoneId and getattr(estate, 'owner', None) is toon:
+                return toon.doId
+        return None
+
+    def getEstateZones(self, ownerId):
+        """Return a list of zone IDs associated with the owner's estate."""
+        av = self.air.doId2do.get(ownerId)
+        if av and getattr(av, 'estate', None):
+            return [av.estate.zoneId]
+        return []
+
     def getEstateZone(self, avId):
         senderId = self.air.getAvatarIdFromSender()
         accId = self.air.getAccountIdFromSender()
@@ -319,6 +333,14 @@ class EstateManagerAI(DistributedObjectAI):
                 toon.estate.owner = toon
                 self._mapToEstate(toon, toon.estate)
                 self.sendUpdateToAvatarId(senderId, 'setEstateZone', [senderId, zoneId])
+                # Activate the owner's pet in the estate zone if they have one.
+                if getattr(simbase, 'wantPets', False) and toon.getPetId():
+                    self.air.sendActivate(
+                        toon.getPetId(),
+                        self.air.districtId,
+                        zoneId,
+                        self.air.dclassesByName['DistributedPetAI'],
+                        {})
             else:
                 # Estate loading failed??!
                 self.sendUpdateToAvatarId(senderId, 'setEstateZone', [0, 0])
@@ -364,6 +386,15 @@ class EstateManagerAI(DistributedObjectAI):
     def _cleanupEstate(self, estate):
         # Boot all Toons from estate:
         self._sendToonsToPlayground(estate, 1)
+
+        # Deactivate the owner's pet if it is active in the estate.
+        owner = getattr(estate, 'owner', None)
+        if owner and getattr(simbase, 'wantPets', False):
+            petId = owner.getPetId()
+            if petId:
+                pet = self.air.doId2do.get(petId)
+                if pet:
+                    pet.requestDelete()
 
         # Clean up toon<->estate mappings...
         for toon in self.estate2toons.get(estate, []):

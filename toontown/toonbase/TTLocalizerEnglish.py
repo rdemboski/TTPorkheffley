@@ -4615,6 +4615,31 @@ PartyDecorationNameDict = {0: {'editor': 'Balloon Anvil',
       'description': 'His only trick is being cold!'},
  27: {'editor': 'ValenToons Anvil',
       'description': "We've got your heart on a string!"}}
+
+# Legacy localizer tables were keyed by zero-based activity/decoration IDs.
+# Add entries for current enum values and one-based int IDs so enum-based
+# lookups resolve correctly.
+def populatePartyLocalizerEnumKeys():
+    from toontown.parties import PartyGlobals
+
+    for key, value in list(PartyActivityNameDict.items()):
+        if isinstance(key, int):
+            enumKey = key + 1
+            PartyActivityNameDict[enumKey] = value
+            try:
+                PartyActivityNameDict[PartyGlobals.ActivityIds(enumKey)] = value
+            except ValueError:
+                pass
+
+    for key, value in list(PartyDecorationNameDict.items()):
+        if isinstance(key, int):
+            enumKey = key + 1
+            PartyDecorationNameDict[enumKey] = value
+            try:
+                PartyDecorationNameDict[PartyGlobals.DecorationIds(enumKey)] = value
+            except ValueError:
+                pass
+
 ActivityLabel = 'Cost - Activity Name'
 PartyDoYouWantToPlan = 'Would you like to plan a new party right now?'
 PartyPlannerOnYourWay = 'Have fun planning your party!'
@@ -5580,6 +5605,9 @@ ColorShopBody = 'Body'
 ColorShopLegs = 'Legs'
 ColorShopParts = 'Multi Color'
 ColorShopAll = 'Single Color'
+ClothesShopShirt = 'Shirt'
+ClothesShopShorts = 'Shorts'
+ClothesShopBottoms = 'Bottoms'
 ClothesShopShortsStyle = 'Shorts'
 ClothesShopShortsColor = 'Color'
 ClothesShopShirtsStyle = 'Shirts'

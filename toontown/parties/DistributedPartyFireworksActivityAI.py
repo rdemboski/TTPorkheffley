@@ -15,7 +15,7 @@ class DistributedPartyFireworksActivityAI(DistributedPartyActivityAI, FSM):
         self.state = 'Idle'
         
     def getEventId(self):
-        return PartyGlobals.FireworkShows.Summer
+        return PartyGlobals.FireworkShows.Summer.value
         
     def getShowStyle(self):
         return random.randint(0, len(FireworkShows.shows[PartyGlobals.FireworkShows.Summer]) - 1)

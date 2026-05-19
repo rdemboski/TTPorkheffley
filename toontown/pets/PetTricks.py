@@ -1,18 +1,19 @@
-from enum import Enum
+from enum import IntEnum
 from direct.showbase.PythonUtil import invertDictLossless
 from direct.interval.IntervalGlobal import *
 import types
 import random
-#Tricks = Enum('JUMP, BEG, PLAYDEAD, ROLLOVER, BACKFLIP, DANCE, SPEAK, BALK,')
-class Tricks(Enum):
-    JUMP = 1
-    BEG = 2
-    PLAYDEAD = 3
-    ROLLOVER = 4
-    BACKFLIP = 5
-    DANCE = 6
-    SPEAK = 7
-    BALK = 8
+# Original Python 2 enum was 0-based; IntEnum preserves int-compatibility for
+# list indexing, dict lookup, and DC protocol serialization.
+class Tricks(IntEnum):
+    JUMP = 0
+    BEG = 1
+    PLAYDEAD = 2
+    ROLLOVER = 3
+    BACKFLIP = 4
+    DANCE = 5
+    SPEAK = 6
+    BALK = 7
 NonHappyMinActualTrickAptitude = 0.1
 NonHappyMaxActualTrickAptitude = 0.6
 MinActualTrickAptitude = 0.5
@@ -72,7 +73,7 @@ TrickSounds = {Tricks.BACKFLIP: 'phase_5/audio/sfx/backflip.ogg',
 def getSoundIval(trickId):
     sounds = TrickSounds.get(trickId, None)
     if sounds:
-        if type(sounds) == bytes:
+        if isinstance(sounds, str):
             sound = loader.loadSfx(sounds)
             return SoundInterval(sound)
         else:
@@ -89,7 +90,7 @@ def getTrickIval(pet, trickId):
     anims = TrickAnims[trickId]
     animRate = random.uniform(0.9, 1.1)
     waitTime = random.uniform(0.0, 1.0)
-    if type(anims) == bytes:
+    if isinstance(anims, str):
         if trickId == Tricks.JUMP:
             animIval = Parallel()
             animIval.append(ActorInterval(pet, anims, playRate=animRate))

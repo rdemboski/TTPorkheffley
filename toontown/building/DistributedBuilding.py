@@ -544,14 +544,13 @@ class DistributedBuilding(DistributedObject.DistributedObject):
         return
 
     def setupCogdo(self, nodePath):
-        dnaStore = self.cr.playGame.dnaStore
-        level = int(self.difficulty / 2) + 1
-        suitNP = dnaStore.findNode(FO_DICT[chr(self.track)])
-        zoneId = dnaStore.getZoneFromBlockNumber(self.block)
+        dnaData = base.cr.playGame.dnaData
+        zoneId = dnaData.getBlock(self.block).zone
         zoneId = ZoneUtil.getTrueZoneId(zoneId, self.interiorZoneId)
         newParentNP = base.cr.playGame.hood.loader.zoneDict[zoneId]
-        suitBuildingNP = suitNP.copyTo(newParentNP)
-        buildingTitle = dnaStore.getTitleFromBlockNumber(self.block)
+        suitBuildingNP = loader.loadModel('phase_5/models/cogdominium/' + FO_DICT[chr(self.track)])
+        suitBuildingNP.reparentTo(newParentNP)
+        buildingTitle = dnaData.getBlock(self.block).title
         if not buildingTitle:
             buildingTitle = TTLocalizer.Cogdominiums
         else:
@@ -568,7 +567,11 @@ class DistributedBuilding(DistributedObject.DistributedObject):
         backgroundNP = loader.loadModel('phase_5/models/cogdominium/field_office_sign')
         backgroundNP.reparentTo(signOrigin)
         backgroundNP.setPosHprScale(0.0, 0.0, -1.2 + textHeight * 0.8 / zScale, 0.0, 0.0, 0.0, 20.0, 8.0, 8.0 * zScale)
-        backgroundNP.node().setEffect(DecalEffect.make())
+        signGeom = backgroundNP.find('+GeomNode')
+        if not signGeom.isEmpty():
+            signGeom.node().setEffect(DecalEffect.make())
+        else:
+            backgroundNP.node().setEffect(DecalEffect.make())
         signTextNodePath = backgroundNP.attachNewNode(textNode.generate())
         signTextNodePath.setDepthOffset(50)
         signTextNodePath.setPosHprScale(0.0, 0.0, -0.13 + textHeight * 0.1 / zScale, 0.0, 0.0, 0.0, 0.1 * 8.0 / 20.0, 0.1, 0.1 / zScale)
@@ -889,7 +892,7 @@ class DistributedBuilding(DistributedObject.DistributedObject):
                 if name.find('_landmark_') != -1:
                     i.stash()
                 else:
-                    i.stash()
+                    i.unstash()
             elif name[0] == 's':
                 if name.find('_landmark_') != -1:
                     i.removeNode()

@@ -7,7 +7,11 @@ from otp.avatar.ShadowCaster import ShadowCaster
 class FlyingGag(NodePath, ShadowCaster):
 
     def __init__(self, name, geom = None):
-        an = ActorNode('flyingGagAN')
+        try:
+            from panda3d.core import ActorNode
+            an = ActorNode('flyingGagAN')
+        except ImportError:
+            an = PandaNode('flyingGagAN')
         NodePath.__init__(self, an)
         self.actorNode = an
         self.gag = None

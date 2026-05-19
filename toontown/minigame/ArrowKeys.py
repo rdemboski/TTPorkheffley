@@ -2,11 +2,11 @@ from panda3d.core import ModifierButtons
 from direct.showbase.DirectObject import DirectObject
 
 class ArrowKeys(DirectObject):
-    UP_KEY = 'w'
-    DOWN_KEY = 's'
-    LEFT_KEY = 'a'
-    RIGHT_KEY = 'd'
-    JUMP_KEY = 'space'
+    UP_KEY = 'arrow_up'
+    DOWN_KEY = 'arrow_down'
+    LEFT_KEY = 'arrow_left'
+    RIGHT_KEY = 'arrow_right'
+    JUMP_KEY = 'control'
     UP_INDEX = 0
     DOWN_INDEX = 1
     LEFT_INDEX = 2

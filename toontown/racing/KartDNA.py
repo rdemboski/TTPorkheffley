@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from direct.directnotify import DirectNotifyGlobal
 from direct.showbase import PythonUtil
 from toontown.toonbase import TTLocalizer
@@ -9,33 +9,33 @@ if (__debug__):
     import pdb
 import copy
 #KartDNA = PythonUtil.Enum('bodyType, bodyColor, accColor,                             ebType, spType, fwwType,                             bwwType, rimsType, decalType')
-class KartDNA(Enum):
-    bodyType = 1
-    bodyColor = 2
-    accColor = 3
-    ebType = 4
-    spType = 5
-    fwwType = 6
-    bwwType = 7
-    rimsType = 8
-    decalType = 9
+class KartDNA(IntEnum):
+    bodyType = 0
+    bodyColor = 1
+    accColor = 2
+    ebType = 3
+    spType = 4
+    fwwType = 5
+    bwwType = 6
+    rimsType = 7
+    decalType = 8
 InvalidEntry = -1
 #KartInfo = PythonUtil.Enum('name, model, cost, viewDist, decalId, LODmodel1, LODmodel2')
 #AccInfo = PythonUtil.Enum('name, model, cost, texCard, attach')
-class KartInfo(Enum):
-    name = 1
-    model = 2
-    cost = 3
-    viewDist = 4
-    decalId = 5
-    LODmodel1 = 6
-    LODmodel2 = 7
-class AccInfo(Enum):
-    name = 1
-    model = 2
-    cost = 3
-    texCard = 4
-    attach = 5
+class KartInfo(IntEnum):
+    name = 0
+    model = 1
+    cost = 2
+    viewDist = 3
+    decalId = 4
+    LODmodel1 = 5
+    LODmodel2 = 6
+class AccInfo(IntEnum):
+    name = 0
+    model = 1
+    cost = 2
+    texCard = 3
+    attach = 4
 kNames = TTLocalizer.KartDNA_KartNames
 KartDict = {0: (kNames[0],
      'phase_6/models/karting/Kart1_Final',

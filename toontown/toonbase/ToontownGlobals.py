@@ -1634,8 +1634,8 @@ class AnimPropTypes(Enum):
     Trashcan = 4
     start=-1
 class EmblemTypes(Enum):
-    Silver = 1
-    Gold = 2
+    Silver = 0
+    Gold = 1
 NumEmblemTypes = 2
 DefaultMaxBankMoney = 12000
 DefaultBankItemId = 1350

@@ -213,11 +213,11 @@ class DistributedBuildingMgrAI:
         return building
 
     def newPetshopBuilding(self, blockNumber):
-        return
         dnaStore = self.air.dnaStoreMap[self.canonicalBranchID]
         exteriorZoneId = dnaStore.getBlock(blockNumber).zone
         exteriorZoneId = ZoneUtil.getTrueZoneId(exteriorZoneId, self.branchID)
         interiorZoneId = self.branchID - self.branchID % 100 + 500 + blockNumber
+        self.notify.debug("Spawning PetShop ext: {0} int: {1}".format(exteriorZoneId, interiorZoneId))
         building = PetshopBuildingAI.PetshopBuildingAI(self.air, exteriorZoneId, interiorZoneId, blockNumber)
         self.__buildings[blockNumber] = building
         return building

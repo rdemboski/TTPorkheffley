@@ -4,7 +4,7 @@
 
 # Client settings
 window-title Toontown Porkheffley
-server-version ttph-v1.0.0
+server-version ttph-v2.0.0
 sync-video #t
 want-dev #f
 preload-avatars #t
@@ -105,5 +105,6 @@ mega-invasion-cog-type tm
 
 
 # Working (Custom) Addons!
+want-cogdominiums #t
 want-toonfest #f
 want-doomsday #f

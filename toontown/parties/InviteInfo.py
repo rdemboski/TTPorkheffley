@@ -13,7 +13,7 @@ class InviteInfoBase:
     def __str__(self):
         string = 'inviteKey=%d ' % self.inviteKey
         string += 'partyId=%d ' % self.partyId
-        string += 'status=%s' % InviteStatus.getString(self.status)
+        string += 'status=%s' % (InviteStatus(self.status).name if not isinstance(self.status, str) else self.status)
         return string
 
     def __repr__(self):

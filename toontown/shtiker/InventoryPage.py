@@ -27,9 +27,9 @@ class InventoryPage(ShtikerPage.ShtikerPage):
         jarGui = loader.loadModel('phase_3.5/models/gui/jar_gui')
         self.moneyDisplay = DirectLabel(parent=self, relief=None, pos=(0.485, 0, -0.5), scale=0.8, text=str(base.localAvatar.getMoney()), text_scale=0.18, text_fg=(0.95, 0.95, 0, 1), text_shadow=(0, 0, 0, 1), text_pos=(0, -0.1, 0), image=jarGui.find('**/Jar'), text_font=ToontownGlobals.getSignFont())
         jarGui.removeNode()
-        tokenGui = loader.loadModel('phase_6/models/gui/ttr_m_tf_gui_tokens')
-        self.tokenDisplay = DirectLabel(parent=self, relief=None, pos=(0.75, 0, -0.4), scale=0.4, text=str(base.localAvatar.getTokens()), text_scale=0.18, text_fg=(0.95, 0.95, 0, 1), text_shadow=(0, 0, 0, 1), text_pos=(0, -0.1, 0), image=tokenGui.find('**/jar'), text_font=ToontownGlobals.getSignFont())
-        tokenGui.removeNode()
+        #tokenGui = loader.loadModel('phase_6/models/gui/ttr_m_tf_gui_tokens')
+        #self.tokenDisplay = DirectLabel(parent=self, relief=None, pos=(0.75, 0, -0.4), scale=0.4, text=str(base.localAvatar.getTokens()), text_scale=0.18, text_fg=(0.95, 0.95, 0, 1), text_shadow=(0, 0, 0, 1), text_pos=(0, -0.1, 0), image=tokenGui.find('**/jar'), text_font=ToontownGlobals.getSignFont())
+        #tokenGui.removeNode()
         return
 
     def unload(self):
@@ -38,7 +38,7 @@ class InventoryPage(ShtikerPage.ShtikerPage):
 
     def __moneyChange(self, money, tokens):
         self.moneyDisplay['text'] = str(money)
-        self.tokenDisplay['text'] = str(tokens)
+        #self.tokenDisplay['text'] = str(tokens)
 
     def enter(self):
         ShtikerPage.ShtikerPage.enter(self)
@@ -46,7 +46,7 @@ class InventoryPage(ShtikerPage.ShtikerPage):
         base.localAvatar.inventory.show()
         base.localAvatar.inventory.reparentTo(self)
         self.moneyDisplay['text'] = str(base.localAvatar.getMoney())
-        self.tokenDisplay['text'] = str(base.localAvatar.getTokens())
+        #self.tokenDisplay['text'] = str(base.localAvatar.getTokens())
         self.accept('enterBookDelete', self.enterDeleteMode)
         self.accept('exitBookDelete', self.exitDeleteMode)
         self.accept('enterTrackFrame', self.updateTrackInfo)
@@ -143,7 +143,7 @@ class InventoryPage(ShtikerPage.ShtikerPage):
         base.localAvatar.inventory.show()
         base.localAvatar.inventory.reparentTo(self)
         self.moneyDisplay['text'] = str(base.localAvatar.getMoney())
-        self.tokenDisplay['text'] = str(base.localAvatar.getTokens())
+        #self.tokenDisplay['text'] = str(base.localAvatar.getTokens())
         self.accept('enterTrackFrame', self.updateTrackInfo)
         self.accept('exitTrackFrame', self.clearTrackInfo)
         self.accept(localAvatar.uniqueName('moneyChange'), self.__moneyChange)

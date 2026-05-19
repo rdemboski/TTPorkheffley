@@ -47,6 +47,7 @@ class CogdoMazeLocalPlayer(CogdoMazePlayer):
         self.accept('control', self.controlKeyPressed)
 
     def destroy(self):
+        taskMgr.remove(self.toon.uniqueName('mazeExitToonUp'))
         self.toon.showName()
         self.ignoreAll()
         self.coolDownAfterHitInterval.clearToInitial()
@@ -252,12 +253,26 @@ class CogdoMazeLocalPlayer(CogdoMazePlayer):
             self._guiMgr.setMessage(message)
             self._winSfx.play()
             self._audioMgr.stopMusic()
+            # Record HP now so we can compute the server-awarded bonus once it
+            # arrives (~1 frame later via b_setHp).  The task is cancelled in
+            # destroy() if the player object is cleaned up first.
+            self._preDoorHp = self.toon.hp
+            taskMgr.doMethodLater(
+                0.5, self._showToonUpMsg,
+                self.toon.uniqueName('mazeExitToonUp'))
         self.notify.info('toonId:%d laff:%d/%d  %d player(s) succeeded in maze game. Going to the executive suit building.' % (toonId,
          self.toon.hp,
          self.toon.maxHp,
          len(self.game.players)))
         if self.numEntered > len(self.game.players):
             self.notify.info('%d player(s) failed in maze game' % (self.numEntered - len(self.game.players)))
+
+    def _showToonUpMsg(self, task):
+        """Show a temporary '+N Laff!' notification after the server's HP update arrives."""
+        gain = self.toon.hp - getattr(self, '_preDoorHp', self.toon.hp)
+        if gain > 0:
+            self._guiMgr.setMessageTemporary('+%d Laff!' % gain)
+        return task.done
 
     def lostMemos(self):
         self.pickupCount = 0

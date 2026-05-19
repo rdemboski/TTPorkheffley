@@ -35,7 +35,7 @@ def generatePos():
         r2 = random.randint(0, estateRadius) - estateRadius / 2
         x = r + estateCenter[0]
         y = r2 + estateCenter[1]
-        raise inCircle(x, y) or AssertionError
+        assert inCircle(x, y)
         return (x, y)
 
     p = get()
@@ -179,6 +179,47 @@ class PetMoverAI(FSM):
             self.__seq.pause()
         self.__seq = None
         return
+
+    def addImpulse(self, name, impulse):
+        """Bridge from PetActionFSM impulse API to this simplified FSM mover."""
+        if name in ('wander', 'unstick'):
+            if self.state != 'Wander':
+                try:
+                    self.request('Wander')
+                except:
+                    pass
+        elif name in ('chase', 'inspect'):
+            target = getattr(impulse, 'target', None)
+            if target is not None:
+                try:
+                    self.demand('Chase', target)
+                except:
+                    try:
+                        self.request('Wander')
+                    except:
+                        pass
+            else:
+                try:
+                    self.request('Wander')
+                except:
+                    pass
+        elif name == 'flee':
+            # Simplified flee: just wander to a random location
+            if self.state != 'Wander':
+                try:
+                    self.request('Wander')
+                except:
+                    pass
+
+    def removeImpulse(self, name):
+        """Stop the current impulse-driven movement."""
+        if self.__seq:
+            self.__seq.pause()
+            self.__seq = None
+        try:
+            self.demand('Still')
+        except:
+            pass
 
     def walkToAvatar(self, av, callback = None):
         if callback:

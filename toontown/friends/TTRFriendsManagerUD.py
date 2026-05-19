@@ -28,24 +28,35 @@ class GetToonDataFSM(FSM):
         self.mgr.air.dbInterface.queryObject(self.mgr.air.dbId, self.avId, self.__queryResponse)
 
     def __queryResponse(self, dclass, fields):
+        petDclass = self.mgr.air.dclassesByName.get('DistributedPetAI')
+        if petDclass and dclass == petDclass:
+            # Pet queries are allowed — the client uses the same getAvatarDetails
+            # path for pets (via addPetToFriendsMap / ReturnPetDlg).
+            self.fields = fields
+            self.fields['ID'] = self.avId
+            self.isPet = True
+            self.demand('Finished')
+            return
         if dclass != self.mgr.air.dclassesByName['DistributedToonUD']:
             self.demand('Failure', 'Invalid dclass for avId %s!' % self.avId)
             return
         self.fields = fields
         self.fields['ID'] = self.avId
+        self.isPet = False
         self.demand('Finished')
 
     def enterFinished(self):
-        # We want to cache the basic information we got for GetFriendsListFSM.
-        self.mgr.avBasicInfoCache[self.avId] = {
-            'expire' : time() + config.ConfigVariableInt('friend-detail-cache-expire', 3600).getValue(),
-            'toonInfo' : [self.avId, self.fields['setName'][0], self.fields['setDNAString'][0], self.fields['setPetId'][0]],
-        }
+        if not getattr(self, 'isPet', False):
+            # We want to cache the basic information we got for GetFriendsListFSM.
+            self.mgr.avBasicInfoCache[self.avId] = {
+                'expire' : time() + config.ConfigVariableInt('friend-detail-cache-expire', 3600).getValue(),
+                'toonInfo' : [self.avId, self.fields['setName'][0], self.fields['setDNAString'][0], self.fields['setPetId'][0]],
+            }
         self.callback(success=True, requesterId=self.requesterId, fields=self.fields)
 
     def enterFailure(self, reason):
         self.mgr.notify.warning(reason)
-        self.callback(success=False, requesterId=None, fields=None)
+        self.callback(success=False, requesterId=self.requesterId, fields=None)
 
 class UpdateToonFieldFSM(FSM):
     """
@@ -160,6 +171,10 @@ class GetFriendsListFSM(FSM):
 
     def __gotAvatarInfo(self, success, requesterId, fields):
         # We no longer need the FSM!
+        if not success or fields is None:
+            self.iterated += 1
+            self.__testFinished()
+            return
         if fields['ID'] in self.getFriendsFieldsFSMs:
             del self.getFriendsFieldsFSMs[fields['ID']]
         if self.state != 'GetFriendsDetails':
@@ -488,16 +503,39 @@ class TTRFriendsManagerUD(DistributedObjectGlobalUD):
         if not success:
             # Something went wrong... abort.
             return
-        details = [
-            ['setExperience' , fields['setExperience'][0]],
-            ['setTrackAccess' , fields['setTrackAccess'][0]],
-            ['setTrackBonusLevel' , fields['setTrackBonusLevel'][0]],
-            ['setInventory' , fields['setInventory'][0]],
-            ['setHp' , fields['setHp'][0]],
-            ['setMaxHp' , fields['setMaxHp'][0]],
-            ['setDefaultShard' , fields['setDefaultShard'][0]],
-            ['setLastHood' , fields['setLastHood'][0]],
-            ['setDNAString' , fields['setDNAString'][0]],
-            ['setLastSeen' , fields.get('setLastSeen', [0])[0]],
-        ]
+        # Distinguish pet vs toon by checking for a pet-specific field.
+        if 'setHead' in fields:
+            # This is a DistributedPet.  Build DNA tuple and return pet fields.
+            dna = [
+                fields.get('setHead',         [0])[0],
+                fields.get('setEars',         [0])[0],
+                fields.get('setNose',         [0])[0],
+                fields.get('setTail',         [0])[0],
+                fields.get('setBodyTexture',  [0])[0],
+                fields.get('setColor',        [0])[0],
+                fields.get('setColorScale',   [0])[0],
+                fields.get('setEyeColor',     [0])[0],
+                fields.get('setGender',       [0])[0],
+            ]
+            details = [
+                ['setPetName',          fields.get('setPetName',          [''])[0]],
+                ['setOwnerId',          fields.get('setOwnerId',          [0])[0]],
+                ['setTraitSeed',        fields.get('setTraitSeed',        [0])[0]],
+                ['setSafeZone',         fields.get('setSafeZone',         [0])[0]],
+                ['_setStyle',           dna],
+                ['setLastSeenTimestamp',fields.get('setLastSeenTimestamp',[0])[0]],
+            ]
+        else:
+            details = [
+                ['setExperience' , fields['setExperience'][0]],
+                ['setTrackAccess' , fields['setTrackAccess'][0]],
+                ['setTrackBonusLevel' , fields['setTrackBonusLevel'][0]],
+                ['setInventory' , fields['setInventory'][0]],
+                ['setHp' , fields['setHp'][0]],
+                ['setMaxHp' , fields['setMaxHp'][0]],
+                ['setDefaultShard' , fields['setDefaultShard'][0]],
+                ['setLastHood' , fields['setLastHood'][0]],
+                ['setDNAString' , fields['setDNAString'][0]],
+                ['setLastSeen' , fields.get('setLastSeen', [0])[0]],
+            ]
         self.sendUpdateToAvatarId(requesterId, 'friendDetails', [fields['ID'], pickle.dumps(details)])

@@ -162,12 +162,13 @@ class PartyPlanner(DirectFrame, FSM):
                 defaultInviteTheme = PartyGlobals.InviteTheme.Racing
             elif ToontownGlobals.VALENTINES_DAY in base.cr.newsManager.getHolidayIdList():
                 defaultInviteTheme = PartyGlobals.InviteTheme.Valentoons
+        defaultInviteThemeValue = defaultInviteTheme.value
         if self.partyInfo != None:
             del self.partyInfo
         activityList = self.partyEditor.partyEditorGrid.getActivitiesOnGrid()
         decorationList = self.partyEditor.partyEditorGrid.getDecorationsOnGrid()
         endTime = self.partyTime + self.partyDuration
-        self.partyInfo = PartyInfo(0, 0, self.partyTime.year, self.partyTime.month, self.partyTime.day, self.partyTime.hour, self.partyTime.minute, endTime.year, endTime.month, endTime.day, endTime.hour, endTime.minute, self.isPrivate, defaultInviteTheme, activityList, decorationList, 0)
+        self.partyInfo = PartyInfo(0, 0, self.partyTime.year, self.partyTime.month, self.partyTime.day, self.partyTime.hour, self.partyTime.minute, endTime.year, endTime.month, endTime.day, endTime.hour, endTime.minute, self.isPrivate, defaultInviteThemeValue, activityList, decorationList, 0)
         if self.noFriends or len(self.getInvitees()) == 0:
             self.inviteVisual.setNoFriends(True)
             self.invitationTitleLabel['text'] = TTLocalizer.PartyPlannerConfirmTitleNoFriends
@@ -175,7 +176,7 @@ class PartyPlanner(DirectFrame, FSM):
             self.selectedInviteThemeLabel.stash()
             self.nextThemeButton.stash()
             self.prevThemeButton.stash()
-            self.setInviteTheme(defaultInviteTheme)
+            self.setInviteTheme(defaultInviteThemeValue)
         else:
             self.inviteVisual.setNoFriends(False)
             self.invitationTitleLabel['text'] = TTLocalizer.PartyPlannerConfirmTitle
@@ -183,7 +184,7 @@ class PartyPlanner(DirectFrame, FSM):
             self.selectedInviteThemeLabel.unstash()
             self.nextThemeButton.unstash()
             self.prevThemeButton.unstash()
-            self.setInviteTheme(defaultInviteTheme)
+            self.setInviteTheme(defaultInviteThemeValue)
         self.inviteVisual.updateInvitation(base.localAvatar.getName(), self.partyInfo)
         self.invitationPage.show()
         return
@@ -216,7 +217,8 @@ class PartyPlanner(DirectFrame, FSM):
 
     def setInviteTheme(self, themeNumber):
         self.currentInvitationTheme = themeNumber
-        self.selectedInviteThemeLabel['text'] = '%s %s (%d/%d)' % (self.inviteVisual.inviteThemesIdToInfo[self.currentInvitationTheme][1],
+        themeEnum = PartyGlobals.InviteTheme(themeNumber)
+        self.selectedInviteThemeLabel['text'] = '%s %s (%d/%d)' % (self.inviteVisual.inviteThemesIdToInfo[themeEnum][1],
          TTLocalizer.PartyPlannerInvitationTheme,
          self.inviteThemes.index(self.currentInvitationTheme) + 1,
          len(self.inviteThemes))
@@ -584,15 +586,16 @@ class PartyPlanner(DirectFrame, FSM):
         return page
 
     def __handleHolidays(self):
-        self.inviteThemes = list(range(len(PartyGlobals.InviteTheme)))
+        self.inviteThemes = list(range(1, len(PartyGlobals.InviteTheme) + 1))
         if hasattr(base.cr, 'newsManager') and base.cr.newsManager:
             holidayIds = base.cr.newsManager.getHolidayIdList()
             if ToontownGlobals.VALENTINES_DAY not in holidayIds:
-                self.inviteThemes.remove(PartyGlobals.InviteTheme.Valentoons)
+                self.inviteThemes.remove(PartyGlobals.InviteTheme.Valentoons.value)
             if ToontownGlobals.VICTORY_PARTY_HOLIDAY not in holidayIds:
-                self.inviteThemes.remove(PartyGlobals.InviteTheme.VictoryParty)
+                self.inviteThemes.remove(PartyGlobals.InviteTheme.VictoryParty.value)
             if ToontownGlobals.WINTER_DECORATIONS not in holidayIds and ToontownGlobals.WACKY_WINTER_DECORATIONS not in holidayIds:
-                self.inviteThemes.remove(PartyGlobals.InviteTheme.Winter)
+                self.inviteThemes.remove(PartyGlobals.InviteTheme.Winter.value)
+        self.currentInvitationTheme = self.inviteThemes[0]
 
     def _createFarewellPage(self):
         page = DirectFrame(self.frame)
@@ -654,8 +657,14 @@ class PartyPlanner(DirectFrame, FSM):
         self.partyActivities = self.partyEditor.partyEditorGrid.getActivitiesOnGrid()
         decorations = self.partyEditor.partyEditorGrid.getDecorationsOnGrid()
         invitees = self.getInvitees()
+        # Activities and decorations are tuples: (id, x, y, rotation)
+        # DC activity/decoration structs need all 4 fields; convert enum IDs to int.
+        def toInt(v):
+            return v.value if hasattr(v, 'value') else int(v)
+        activitiesValues = [(toInt(a[0]), int(a[1]), int(a[2]), int(a[3])) for a in self.partyActivities]
+        decorationsValues = [(toInt(d[0]), int(d[1]), int(d[2]), int(d[3])) for d in decorations]
         self.accept('addPartyResponseReceived', self.processAddPartyResponse)
-        base.cr.partyManager.sendAddParty(hostId, self.partyTime.strftime('%Y-%m-%d %H:%M:%S'), endTime.strftime('%Y-%m-%d %H:%M:%S'), self.isPrivate, self.currentInvitationTheme, self.partyActivities, decorations, invitees)
+        base.cr.partyManager.sendAddParty(hostId, self.partyTime.strftime('%Y-%m-%d %H:%M:%S'), endTime.strftime('%Y-%m-%d %H:%M:%S'), self.isPrivate, self.currentInvitationTheme, activitiesValues, decorationsValues, invitees)
 
     def getInvitees(self):
         invitees = []
@@ -666,7 +675,8 @@ class PartyPlanner(DirectFrame, FSM):
         return invitees
 
     def processAddPartyResponse(self, hostId, errorCode):
-        PartyPlanner.notify.debug('processAddPartyResponse : hostId=%d errorCode=%s' % (hostId, PartyGlobals.AddPartyErrorCode.getString(errorCode)))
+        errorCode = PartyGlobals.AddPartyErrorCode(errorCode)
+        PartyPlanner.notify.debug('processAddPartyResponse : hostId=%d errorCode=%s' % (hostId, errorCode.name))
         goingBackAllowed = False
         if errorCode == PartyGlobals.AddPartyErrorCode.AllOk:
             goingBackAllowed = False

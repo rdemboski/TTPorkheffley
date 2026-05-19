@@ -42,7 +42,7 @@ class InviteVisual(DirectFrame):
                                             1.0,
                                             1.0,
                                             1.0))}
-        self.inviteThemeBackground = DirectFrame(parent=self, image=self.inviteThemesIdToInfo[0][0], relief=None)
+        self.inviteThemeBackground = DirectFrame(parent=self, image=self.inviteThemesIdToInfo[PartyGlobals.InviteTheme.Birthday][0], relief=None)
         self.whosePartyLabel = DirectLabel(parent=self, relief=None, pos=self.gui.find('**/who_locator').getPos(), text='.', text_scale=0.067, textMayChange=True)
         self.activityTextLabel = DirectLabel(parent=self, relief=None, text='.\n.\n.\n.', pos=self.gui.find('**/what_locator').getPos(), text_scale=TTLocalizer.IVactivityTextLabel, textMayChange=True)
         self.whenTextLabel = DirectLabel(parent=self, relief=None, text='.\n.\n.', pos=self.gui.find('**/when_locator').getPos(), text_scale=TTLocalizer.IVwhenTextLabel, textMayChange=True)
@@ -102,10 +102,11 @@ class InviteVisual(DirectFrame):
         return stringDone + '\n' + stringLeft
 
     def changeTheme(self, newTheme):
-        self.inviteThemeBackground['image'] = self.inviteThemesIdToInfo[newTheme][0]
-        self.whosePartyLabel['text_fg'] = self.inviteThemesIdToInfo[newTheme][2]
-        self.activityTextLabel['text_fg'] = self.inviteThemesIdToInfo[newTheme][2]
-        self.whenTextLabel['text_fg'] = self.inviteThemesIdToInfo[newTheme][2]
+        themeEnum = PartyGlobals.InviteTheme(newTheme)
+        self.inviteThemeBackground['image'] = self.inviteThemesIdToInfo[themeEnum][0]
+        self.whosePartyLabel['text_fg'] = self.inviteThemesIdToInfo[themeEnum][2]
+        self.activityTextLabel['text_fg'] = self.inviteThemesIdToInfo[themeEnum][2]
+        self.whenTextLabel['text_fg'] = self.inviteThemesIdToInfo[themeEnum][2]
 
     def close(self):
         self.destroy()

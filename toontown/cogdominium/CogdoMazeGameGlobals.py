@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from direct.showbase import PythonUtil
 from panda3d.core import VBase4
 #GameActions = PythonUtil.Enum(('EnterDoor',
@@ -6,7 +6,7 @@ from panda3d.core import VBase4
 # 'OpenDoor',
 # 'Countdown',
 # 'TimeAlert'))
-class GameActions(Enum):
+class GameActions(IntEnum):
     EnterDoor = 1
     RevealDoor = 2
     OpenDoor = 3
@@ -15,6 +15,11 @@ class GameActions(Enum):
 SecondsUntilTimeout = 4.0 * 60.0
 SecondsUntilGameEnds = 60.0
 SecondsForTimeAlert = 60.0
+# Laff awarded when a toon enters the exit elevator.
+# Scales linearly with how much of SecondsUntilGameEnds remains:
+#   full time left → MaxLaffBonus,  no time left → MinLaffBonus.
+MaxLaffBonus = 3
+MinLaffBonus = 1
 MaxPlayers = 4
 IntroDurationSeconds = 24.0
 FinishDurationSeconds = 5.0
@@ -85,13 +90,11 @@ CamCutoffFactor = 1.34
 ToonAnimationInfo = {'hit': ('slip-backward', 2.25, 12)}
 NumPickups = 256
 PickupsUntilDoorOpens = int(NumPickups * 0.6)
-#SuitCollisionName = 'CogdoMazeSuit_Collision'
-class SuitCollisionName(Enum):
-    CogdoMazeSuit_Collision = 1
+SuitCollisionName = 'CogdoMazeSuit_Collision'
 SuitWalkSameDirectionProb = 1
 SuitWalkTurnAroundProb = 100
 #SuitTypes = PythonUtil.Enum(('Boss', 'FastMinion', 'SlowMinion'))
-class SuitTypes(Enum):
+class SuitTypes(IntEnum):
     Boss = 1
     FastMinion = 2
     SlowMinion = 3

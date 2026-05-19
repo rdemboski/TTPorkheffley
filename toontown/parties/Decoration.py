@@ -12,7 +12,7 @@ class Decoration(NodePath):
     def __init__(self, name, x, y, h):
         NodePath.__init__(self, name)
         self.name = name
-        decorId = PartyGlobals.DecorationIds.fromString(name)
+        decorId = PartyGlobals.DecorationIds[name]
         centerX, centerY = getCenterPosFromGridSize(x, y, PartyGlobals.DecorationInformationDict[decorId]['gridsize'])
         self.setPos(centerX, centerY, 0.0)
         self.setH(h)

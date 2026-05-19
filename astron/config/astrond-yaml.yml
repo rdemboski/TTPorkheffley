@@ -54,7 +54,7 @@ uberdogs:
 roles:
     - type: clientagent
       bind: 0.0.0.0:7198
-      version: ttph-v1.0.0
+      version: ttph-v2.0.0
       client:
        relocate: true
        add_interest: enabled

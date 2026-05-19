@@ -25,6 +25,30 @@ if __debug__:
     from direct.showbase.PythonUtil import StackTrace
 from .PetMoverAI import PetMoverAI
 
+
+class _WanderImpulseStub:
+    """Minimal stub wander impulse used by simplified PetMoverAI."""
+    pass
+
+
+class _ChaseImpulseStub:
+    """Minimal stub chase impulse used by simplified PetMoverAI."""
+    def __init__(self):
+        self.target = None
+
+    def setTarget(self, target):
+        self.target = target
+
+
+class _FleeImpulseStub:
+    """Minimal stub flee impulse used by simplified PetMoverAI."""
+    def __init__(self):
+        self.chaser = None
+
+    def setChaser(self, chaser):
+        self.chaser = chaser
+
+
 class DistributedPetAI(DistributedSmoothNodeAI.DistributedSmoothNodeAI, PetLookerAI.PetLookerAI, PetBase.PetBase):
     notify = DirectNotifyGlobal.directNotify.newCategory('DistributedPetAI')
     movieTimeSwitch = {PetConstants.PET_MOVIE_FEED: PetConstants.FEED_TIME,
@@ -519,6 +543,9 @@ class DistributedPetAI(DistributedSmoothNodeAI.DistributedSmoothNodeAI, PetLooke
             self.brain = PetBrain.PetBrain(self)
             self.mover = PetMoverAI(self)
             self.enterPetLook()
+            self.wanderImpulse = _WanderImpulseStub()
+            self.chaseImpulse = _ChaseImpulseStub()
+            self.fleeImpulse = _FleeImpulseStub()
             self.actionFSM = PetActionFSM.PetActionFSM(self)
             self.teleportIn()
             self.handleMoodChange(distribute=0)
@@ -591,6 +618,10 @@ class DistributedPetAI(DistributedSmoothNodeAI.DistributedSmoothNodeAI, PetLooke
                 self.exitPetLook()
                 self.mover.destroy()
                 del self.mover
+                if hasattr(self, 'wanderImpulse'):
+                    del self.wanderImpulse
+                    del self.chaseImpulse
+                    del self.fleeImpulse
                 self.stopPosHprBroadcast()
         if hasattr(self, 'mood'):
             self.mood.destroy()

@@ -11,11 +11,17 @@ class TailorClothesGUI(ClothesGUI.ClothesGUI):
     def setupScrollInterface(self):
         self.dna = self.toon.getStyle()
         gender = self.dna.getGender()
-        if self.swapEvent != None:
+        if gender != self.gender:
+            self.topStyles = ToonDNA.getTopStyles(gender, tailorId=self.tailorId)
             self.tops = ToonDNA.getTops(gender, tailorId=self.tailorId)
+            self.bottomStyles = ToonDNA.getBottomStyles(gender, tailorId=self.tailorId)
             self.bottoms = ToonDNA.getBottoms(gender, tailorId=self.tailorId)
             self.gender = gender
-            self.topChoice = -1
-            self.bottomChoice = -1
+            self.topChoice = 0
+            self.topColorChoice = 0
+            self.topStyleChoice = 0
+            self.bottomStyleChoice = 0
+            self.bottomColorChoice = 0
+            self.bottomChoice = 0
         self.setupButtons()
         return

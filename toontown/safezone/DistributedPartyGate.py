@@ -132,7 +132,7 @@ class DistributedPartyGate(DistributedObject.DistributedObject):
         return
 
     def partyRequestDenied(self, reason):
-        DistributedPartyGate.notify.debug('partyRequestDenied( reason=%s )' % PartyGlobals.PartyGateDenialReasons.getString(reason))
+        DistributedPartyGate.notify.debug('partyRequestDenied( reason=%s )' % (PartyGlobals.PartyGateDenialReasons(reason).name if not isinstance(reason, PartyGlobals.PartyGateDenialReasons) else reason.name))
         if reason == PartyGlobals.PartyGateDenialReasons.Unavailable:
             self.showMessage(TTLocalizer.PartyGatePartyUnavailable)
         elif reason == PartyGlobals.PartyGateDenialReasons.Full:

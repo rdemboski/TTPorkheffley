@@ -29,7 +29,7 @@ class DistributedPartyFireworksActivity(DistributedPartyActivity, FireworkShowMi
         FireworkShowMixin.__init__(self, restorePlaygroundMusic=True, startDelay=FireworksPostLaunchDelay)
 
     def setEventId(self, eventId):
-        DistributedPartyFireworksActivity.notify.debug('setEventId( %s )' % FireworkShows.getString(eventId))
+        DistributedPartyFireworksActivity.notify.debug('setEventId( %s )' % FireworkShows(eventId).name)
         self.eventId = eventId
 
     def setShowStyle(self, showStyle):
