@@ -28,8 +28,7 @@ class GetToonDataFSM(FSM):
         self.mgr.air.dbInterface.queryObject(self.mgr.air.dbId, self.avId, self.__queryResponse)
 
     def __queryResponse(self, dclass, fields):
-        petDclass = self.mgr.air.dclassesByName.get('DistributedPetAI')
-        if petDclass and dclass == petDclass:
+        if dclass is not None and dclass.getName() == 'DistributedPet':
             # Pet queries are allowed — the client uses the same getAvatarDetails
             # path for pets (via addPetToFriendsMap / ReturnPetDlg).
             self.fields = fields
@@ -37,7 +36,7 @@ class GetToonDataFSM(FSM):
             self.isPet = True
             self.demand('Finished')
             return
-        if dclass != self.mgr.air.dclassesByName['DistributedToonUD']:
+        if dclass is None or dclass.getName() != 'DistributedToon':
             self.demand('Failure', 'Invalid dclass for avId %s!' % self.avId)
             return
         self.fields = fields
@@ -140,7 +139,7 @@ class GetFriendsListFSM(FSM):
             # We're not currently trying to get our friends list.
             self.demand('Failure', '__gotFriendsList called when looking for friends list, avId %d' % self.requesterId)
             return
-        if dclass != self.mgr.air.dclassesByName['DistributedToonUD']:
+        if dclass is None or dclass.getName() != 'DistributedToon':
             # We got an invalid class from the database, eww.
             self.demand('Failure', 'Invalid dclass for toonId %d' % self.requesterId)
             return
@@ -224,6 +223,7 @@ class TTRFriendsManagerUD(DistributedObjectGlobalUD):
     def __init__(self, air):
         DistributedObjectGlobalUD.__init__(self, air)
         self.fsms = {}
+        self.detailFsms = {}
         # TODO: Maybe get the AI to refresh the cache?
         self.avBasicInfoCache = {}
         self.tpRequests = {}
@@ -457,7 +457,7 @@ class TTRFriendsManagerUD(DistributedObjectGlobalUD):
             return
         self.sendUpdateToAvatarId(
             requesterId, 'friendInfo',
-            [ fields['ID'], fields['setName'][0], fields['setDNAString'][0], fields['setPetId'][0] ]
+            [ [fields['ID'], fields['setName'][0], fields['setDNAString'][0], fields['setPetId'][0]] ]
         )
         if avIds:
             # We still have more to go... oh boy.
@@ -489,19 +489,23 @@ class TTRFriendsManagerUD(DistributedObjectGlobalUD):
 
     def getAvatarDetails(self, friendId):
         requesterId = self.air.getAvatarIdFromSender()
-        if requesterId in self.fsms:
-            # Looks like the requester already has an FSM running. In the future we
-            # may want to handle this, but for now just ignore it.
+        if requesterId in self.detailFsms:
             return
         fsm = GetToonDataFSM(self, requesterId, friendId, self.__gotAvatarDetails)
         fsm.start()
-        self.fsms[requesterId] = fsm
+        self.detailFsms[requesterId] = fsm
 
     def __gotAvatarDetails(self, success, requesterId, fields):
-        # We no longer need the FSM.
-        self.deleteFSM(requesterId)
+        fsm = self.detailFsms.get(requesterId)
+        avId = getattr(fsm, 'avId', 0) if fsm else 0
+        if fsm:
+            if fsm.state != 'Off':
+                fsm.demand('Off')
+            del self.detailFsms[requesterId]
         if not success:
-            # Something went wrong... abort.
+            # Notify the client so it doesn't hang waiting for a response.
+            if avId:
+                self.sendUpdateToAvatarId(requesterId, 'friendDetails', [avId, pickle.dumps([])])
             return
         # Distinguish pet vs toon by checking for a pet-specific field.
         if 'setHead' in fields:

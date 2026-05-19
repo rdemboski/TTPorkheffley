@@ -234,7 +234,7 @@ class CatalogAccessoryItem(CatalogItem.CatalogItem):
     def applyColor(self, model, color):
         if model == None or color == None:
             return
-        if isinstance(color, bytes):
+        if isinstance(color, (str, bytes)):
             tex = loader.loadTexture(color)
             tex.setMinfilter(Texture.FTLinearMipmapLinear)
             tex.setMagfilter(Texture.FTLinear)
@@ -261,7 +261,7 @@ class CatalogAccessoryItem(CatalogItem.CatalogItem):
             self.applyColor(model, texture)
         colorVec4 = self.getColor()
         if colorVec4:
-            modelColor = (colorVec4.getX(), colorVec4.getY(), colorVec4.getZ())
+            modelColor = (colorVec4.getX(), colorVec4.getY(), colorVec4.getZ(), colorVec4.getW())
             self.applyColor(model, modelColor)
         model.flattenLight()
         return model

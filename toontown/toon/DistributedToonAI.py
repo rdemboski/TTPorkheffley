@@ -4817,6 +4817,14 @@ def setMoney(moneyVal):
     spellbook.getTarget().b_setMoney(moneyVal)
     return 'maxMoney set to %s' % moneyVal
 
+@magicWord(category=CATEGORY_CHARACTERSTATS, types=[int], aliases=['jb', 'jellybeans'])
+def addBankMoney(amount=1000):
+    """Add jellybeans to the target's bank. Amount defaults to 1000."""
+    toon = spellbook.getTarget()
+    newBank = min(toon.bankMoney + amount, toon.maxBankMoney)
+    toon.b_setBankMoney(newBank)
+    return 'Bank jellybeans set to %s / %s' % (newBank, toon.maxBankMoney)
+
 @magicWord(category=CATEGORY_CHARACTERSTATS, types=[int])
 def setFishingRod(rodVal):
     """Set target's fishing rod value."""

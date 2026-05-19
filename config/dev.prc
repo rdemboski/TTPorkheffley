@@ -59,7 +59,7 @@ mongodb-url mongodb://127.0.0.1/astron
 want-pets #t
 want-news-tab #f
 want-news-page #f
-want-accessories #f
+want-accessories #t
 want-parties #t
 want-gardening #t
 want-gifting #f
@@ -71,7 +71,7 @@ want-keep-alive #f
 
 # Developer Modifications
 # A few fun things for our developer build. These shouldn't go in public_client.
-estate-day-night #t
+estate-day-night #f
 want-instant-parties #t
 show-total-population #f
 want-toontorial #f

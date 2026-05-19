@@ -1,6 +1,8 @@
 from direct.distributed.DistributedObjectGlobal import DistributedObjectGlobal
 from otp.otpbase import OTPLocalizer
 from toontown.hood import ZoneUtil
+from toontown.toon import ToonDNA
+from toontown.friends import FriendHandle
 import pickle
 
 class TTRFriendsManager(DistributedObjectGlobal):
@@ -15,7 +17,14 @@ class TTRFriendsManager(DistributedObjectGlobal):
         self.sendUpdate('requestFriendsList', [])
     
     def friendInfo(self, resp):
-        base.cr.handleGetFriendsListExtended(resp)
+        # resp is a single Friend struct: (doId, name, dnaString, petId)
+        doId, name, dnaString, petId = resp
+        if not (name and dnaString):
+            return
+        dna = ToonDNA.ToonDNA()
+        dna.makeFromNetString(dnaString)
+        handle = FriendHandle.FriendHandle(doId, name, dna, petId)
+        base.cr.friendsMap[doId] = handle
         
     def friendList(self, resp):
         base.cr.handleGetFriendsList(resp)

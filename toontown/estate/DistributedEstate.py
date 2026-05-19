@@ -363,6 +363,9 @@ class DistributedEstate(DistributedObject.DistributedObject):
 
     def setIdList(self, idList):
         self.idList = idList
+        unknownIds = [i for i in idList if i and i != base.localAvatar.doId and i not in base.cr.friendsMap]
+        if unknownIds:
+            base.cr.ttrFriendsManager.d_requestAvatarInfo(unknownIds)
 
     def loadFlowerSellBox(self):
         self.flowerSellBox = loader.loadModel('phase_5.5/models/estate/wheelbarrel')

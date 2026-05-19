@@ -1315,13 +1315,13 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.gotCatalogNotify = 0
         currentWeek = self.catalogScheduleCurrentWeek - 1
         if currentWeek < 57:
-            seriesNumber = currentWeek / ToontownGlobals.CatalogNumWeeksPerSeries + 1
+            seriesNumber = currentWeek // ToontownGlobals.CatalogNumWeeksPerSeries + 1
             weekNumber = currentWeek % ToontownGlobals.CatalogNumWeeksPerSeries + 1
         elif currentWeek < 65:
             seriesNumber = 6
             weekNumber = currentWeek - 56
         else:
-            seriesNumber = currentWeek / ToontownGlobals.CatalogNumWeeksPerSeries + 2
+            seriesNumber = currentWeek // ToontownGlobals.CatalogNumWeeksPerSeries + 2
             weekNumber = currentWeek % ToontownGlobals.CatalogNumWeeksPerSeries + 1
         message = None
         if self.mailboxNotify == ToontownGlobals.NoItems:
