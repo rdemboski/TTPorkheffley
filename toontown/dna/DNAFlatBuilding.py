@@ -32,6 +32,7 @@ class DNAFlatBuilding(DNANode):
         type = DNAUtil.getBuildingClassFromName(self.id)
         if type == 'tb':
             self.generateSuitGeometry(storage, np, height, barrier)
+            self.generateCogdoGeometry(storage, np, height, barrier)
 
         # We need to set collisions on all of our knock knock doors:
         block = DNAUtil.getBlockFromName(self.name)
@@ -41,6 +42,34 @@ class DNAFlatBuilding(DNANode):
 
         # Finally, flatten down:
         np.flattenStrong()
+
+    def generateCogdoGeometry(self, storage, np, height, barrier):
+        node = np.getParent().attachNewNode('cb' + self.id[2:])
+        node.setTransform(np.getTransform())
+
+        barrier.copyTo(node)
+
+        block = DNAUtil.getBlockFromName(self.id)
+        x = int(np.getX())
+        y = int(np.getY())
+        seed = block*1231 + x*83 + y
+
+        codes = storage.getNumCatalogCodes('cogdo_wall')
+        if codes != 0:
+            wallCode = storage.getCatalogCode('cogdo_wall', seed % codes)
+            wall = storage.findNode(wallCode)
+        else:
+            wall = None
+
+        if wall:
+            wallNode = wall.copyTo(node)
+            wallNode.setScale(self.width, 1, height)
+
+            for door in DNAUtil.getChildrenOfType(self, DNAFlatDoor):
+                door.generateSuitGeometry(storage, wallNode)
+
+        node.flattenStrong()
+        node.stash()
 
     def generateSuitGeometry(self, storage, np, height, barrier):
         node = np.getParent().attachNewNode('sb' + self.id[2:])

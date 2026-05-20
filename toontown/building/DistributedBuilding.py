@@ -889,10 +889,7 @@ class DistributedBuilding(DistributedObject.DistributedObject):
                 else:
                     i.unstash()
             elif name[0] == 't':
-                if name.find('_landmark_') != -1:
-                    i.stash()
-                else:
-                    i.unstash()
+                i.stash()
             elif name[0] == 's':
                 if name.find('_landmark_') != -1:
                     i.removeNode()
