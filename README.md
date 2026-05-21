@@ -55,7 +55,9 @@ The following features are still under development:
 - Gardening
 - Events (Grand Prix, Fish Bingo, etc)
 - Field Offices
+- Toontorial
 - TTR-style Options Menu
+- New Playground
 
 ## New Features
 
