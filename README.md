@@ -1,17 +1,79 @@
-# TTR-Offline
+<h1 align="center">Toontown Porkheffley</h1>
+<p align="center"><em>A modern, TTR-inspired Toontown private server</em></p>
 
-Toontown Rewritten Offline DEVELOPMENT Repository
+<p align="center">
+  <img src="wynaut.png" alt="Wynaut" width="180"/>
+</p>
 
-Resources: https://github.com/Toontown-Rewritten-Offline/resources
+<p align="center">
+  
+  ![Python](https://img.shields.io/badge/Python-3.13.13-blue?logo=python)
+  ![Panda3D](https://img.shields.io/badge/Panda3D-1.10.16-green?logo=panda3d)
+  ![Astron](https://img.shields.io/badge/Astron-latest-orange)
 
-Panda3D: https://github.com/Toontown-Rewritten-Offline/panda3d
+</p>
 
-Astron: https://github.com/Astron/Astron/
+---
 
-# Dependencies
-Panda3D: https://github.com/Toontown-Rewritten-Offline/panda3d/releases/tag/v1.10.11
+Toontown Porkheffley is a TTR-inspired private server that aims to be a close preservation of the original Toontown Online, built with modern technologies.
 
-To install the dependencies, use this command...
-```sh
-pip install -r requirements.txt
-```
+## Table of Contents
+
+- [Features](#features)
+- [In Development](#in-development)
+- [New Features](#new-features)
+- [Getting Started](#getting-started)
+
+---
+
+## Features
+
+Nearly all of the core gameplay features you would expect are functional, including:
+
+- Battling
+- Questing
+- Bosses
+- Invasions
+- Friends
+- Chat
+- Trolley
+- Fishing
+- Racing
+- Golf
+- Parties
+- Doodles
+- Estates
+- Catalog
+- Clothing
+- Decorating
+
+## In Development
+
+The following features are still under development:
+
+- Accessories
+- Gardening
+- Events (Grand Prix, Fish Bingo, etc)
+- Field Offices
+- Toontorial
+- TTR-style Options Menu
+- New Playground
+
+## New Features
+
+The game also has new features such as:
+
+- Custom Player Models
+- MP3 Player with Original Music
+
+---
+
+## Getting Started
+
+> _Instructions for setting up and running the project will go here._
+
+---
+
+<div align="center">
+	<sub>Powered by Python, Panda3D, and Astron</sub>
+</div>

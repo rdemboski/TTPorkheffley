@@ -140,9 +140,9 @@ class DedicatedServer:
 
         else:
             if sys.platform == 'win32':
-                uberDogArguments = 'TTROFFEngine.exe --uberdog'
+                uberDogArguments = '%s -O -m toontown.uberdog.ServiceStartUD' % open('PPYTHON_PATH').read()
             else:
-                uberDogArguments = 'TTROFFEngine --uberdog'
+                uberDogArguments = 'python3 -O -m toontown.uberdog.ServiceStartUD'
 
         if config.ConfigVariableBool('auto-start-server', True).getValue():
             gameServicesDialog['text'] = OTPLocalizer.CRLoadingGameServices + '\n\n' + OTPLocalizer.CRLoadingGameServicesUberdog
@@ -187,9 +187,9 @@ class DedicatedServer:
                 aiArguments = 'python3 -m toontown.ai.ServiceStartAI'
         else:
             if sys.platform == 'win32':
-                aiArguments = 'TTROFFEngine.exe --ai'
+                aiArguments = '%s -O -m toontown.ai.ServiceStartAI' % open('PPYTHON_PATH').read()
             else:
-                aiArguments = 'TTROFFEngine --ai'
+                aiArguments = 'python3 -O -m toontown.ai.ServiceStartAI'
 
         if config.ConfigVariableBool('auto-start-server', True).getValue():
             gameServicesDialog['text'] = OTPLocalizer.CRLoadingGameServices + '\n\n' + OTPLocalizer.CRLoadingGameServicesAI
@@ -219,7 +219,7 @@ class DedicatedServer:
         self.notify.info('AI started successfully!')
 
         # Every aspect of the server has started. Let's finish with the done message.
-        self.notify.info('Server now ready. Have fun on Toontown Rewritten Offline!')
+        self.notify.info('Server now ready. Have fun on Toontown Porkheffley!')
         if self.localServer:
             messenger.send('localServerReady')
 
@@ -304,7 +304,7 @@ class DedicatedServer:
         # And lastly, MongoDB
         if config.ConfigVariableBool('want-mongo-client', False).getValue():
             if self.mongoProcess:
-                self.astronProcess.terminate()
+                self.mongoProcess.terminate()
 
     @staticmethod
     def generateLog(logPrefix):

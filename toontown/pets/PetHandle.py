@@ -14,6 +14,12 @@ class PetHandle:
         self._grabMood(avatar)
 
     def _grabMood(self, avatar):
+        if not hasattr(avatar, 'lastKnownMood'):
+            # bFake holder loaded via DB query (no announceGenerate) — mood data
+            # is not available yet.  Store the timestamp if present; mood will be
+            # refreshed the next time the pet is visited at the estate.
+            self.setLastSeenTimestamp(getattr(avatar, 'lastSeenTimestamp', 0))
+            return
         self.mood = avatar.lastKnownMood.makeCopy()
         self.mood.setPet(self)
         self.lastKnownMood = self.mood.makeCopy()
@@ -46,6 +52,8 @@ class PetHandle:
         return max(0.0, t)
 
     def updateOfflineMood(self):
+        if not hasattr(self, 'mood') or not hasattr(self, 'lastKnownMood'):
+            return
         self.mood.driftMood(dt=self.getTimeSinceLastSeen(), curMood=self.lastKnownMood)
 
     def getDominantMood(self):

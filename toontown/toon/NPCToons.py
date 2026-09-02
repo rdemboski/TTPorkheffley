@@ -103,7 +103,6 @@ def createNPC(air, npcId, desc, zoneId, posIndex = 0, questCallback = None):
     elif type == NPC_FISHERMAN:
         npc = DistributedNPCFishermanAI.DistributedNPCFishermanAI(air, npcId)
     elif type == NPC_PETCLERK:
-        return False
         npc = DistributedNPCPetclerkAI.DistributedNPCPetclerkAI(air, npcId)
     elif type == NPC_KARTCLERK:
         npc = DistributedNPCKartClerkAI.DistributedNPCKartClerkAI(air, npcId)
@@ -177,7 +176,9 @@ def createNpcsInZone(air, zoneId):
     for i in range(len(npcIdList)):
         npcId = npcIdList[i]
         npcDesc = NPCToonDict.get(npcId)
-        npcs.append(createNPC(air, npcId, npcDesc, zoneId, posIndex=i))
+        npc = createNPC(air, npcId, npcDesc, zoneId, posIndex=i)
+        if npc:
+            npcs.append(npc)
 
     return npcs
 

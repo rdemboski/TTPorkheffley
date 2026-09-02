@@ -11,6 +11,9 @@ class DistributedPartyDanceActivityBaseAI(DistributedPartyActivityAI):
         self.toons = []
         self.headings = []
         
+    def getToonsPlaying(self):
+        return (list(self.toons), list(self.headings))
+
     def generate(self):
         DistributedPartyActivityAI.generate(self)
         self.sendUpdate('setState', ['Active', globalClockDelta.getRealNetworkTime()])

@@ -1,13 +1,13 @@
 from panda3d.core import *
 from .DistributedNPCToonBase import *
 from direct.gui.DirectGui import *
-from panda3d.core import *
 from . import NPCToons
 from direct.task.Task import Task
 from toontown.toonbase import TTLocalizer
 from toontown.pets import PetshopGUI
 from toontown.hood import ZoneUtil
 from toontown.toontowngui import TeaserPanel
+from otp.nametag.NametagConstants import *
 
 class DistributedNPCPetclerk(DistributedNPCToonBase):
 
@@ -132,7 +132,7 @@ class DistributedNPCPetclerk(DistributedNPCToonBase):
             self.setupAvatars(self.av)
             if self.isLocalToon:
                 camera.wrtReparentTo(render)
-                camera.lerpPosHpr(-5, 9, base.localAvatar.getHeight() - 0.5, -150, -2, 0, 1, other=self, blendType='easeOut', task=self.uniqueName('lerpCamera'))
+                LerpPosHprInterval(camera, 1, Point3(-5, 9, base.localAvatar.getHeight() - 0.5), Point3(-150, -2, 0), other=self, blendType='easeOut', name=self.uniqueName('lerpCamera')).start()
             if self.isLocalToon:
                 taskMgr.doMethodLater(1.0, self.popupPetshopGUI, self.uniqueName('popupPetshopGUI'))
         elif mode == NPCToons.SELL_MOVIE_COMPLETE:

@@ -31,6 +31,7 @@ class DistributedRacePadAI(DistributedKartPadAI, FSM):
         self.trackId, self.trackType = [None, None]
         self.lastTime = globalClockDelta.getRealNetworkTime()
         self.shouldStart = False
+        self.runningMovie = False
         self.index = -1
         self.nameType = 'urban'
         

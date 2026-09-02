@@ -1,8 +1,14 @@
+from toontown.parties.PartyGlobals import DecorationIds
 
 
 class DecorBase:
 
     def __init__(self, decorId, x, y, h):
+        if not isinstance(decorId, DecorationIds):
+            try:
+                decorId = DecorationIds(decorId)
+            except ValueError:
+                pass
         self.decorId = decorId
         self.x = x
         self.y = y

@@ -20,10 +20,10 @@ from . import FADoorCodes
 from toontown.hood import ZoneUtil
 import random
 import time
-#from toontown.cogdominium.DistributedCogdoInteriorAI import DistributedCogdoInteriorAI
-#from toontown.cogdominium.SuitPlannerCogdoInteriorAI import SuitPlannerCogdoInteriorAI
-#from toontown.cogdominium.CogdoLayout import CogdoLayout
-#from toontown.cogdominium.DistributedCogdoElevatorExtAI import DistributedCogdoElevatorExtAI
+from toontown.cogdominium.DistributedCogdoInteriorAI import DistributedCogdoInteriorAI
+from toontown.cogdominium.SuitPlannerCogdoInteriorAI import SuitPlannerCogdoInteriorAI
+from toontown.cogdominium.CogdoLayout import CogdoLayout
+from toontown.cogdominium.DistributedCogdoElevatorExtAI import DistributedCogdoElevatorExtAI
 
 class DistributedBuildingAI(DistributedObjectAI.DistributedObjectAI):
 
@@ -127,13 +127,11 @@ class DistributedBuildingAI(DistributedObjectAI.DistributedObjectAI):
         if not self.isToonBlock():
             return
         self.updateSavedBy(None)
-        minFloors, maxFloors = self._getMinMaxFloors(difficulty)
-        if buildingHeight == None:
-            numFloors = random.randint(minFloors, maxFloors)
-        else:
-            numFloors = buildingHeight + 1
-            if numFloors < minFloors or numFloors > maxFloors:
-                numFloors = random.randint(minFloors, maxFloors)
+        # Cogdominiums always have exactly 1 maze floor + 1 penthouse (boss) floor,
+        # matching TTO's two-floor layout.  Difficulty scales the suit count inside
+        # the maze, not the number of floors — so _getMinMaxFloors is intentionally
+        # not used here.
+        numFloors = 1
         self.track = 'c'
         self.difficulty = difficulty
         self.numFloors = numFloors
@@ -541,9 +539,29 @@ class DistributedBuildingAI(DistributedObjectAI.DistributedObjectAI):
 
     def createCogdoInterior(self):
         self.interior = self._createCogdoInterior()
-        dummy, interiorZoneId = self.getExteriorAndInteriorZoneId()
-        self.interior.fsm.request('WaitForAllToonsInside')
+        exteriorZoneId, interiorZoneId = self.getExteriorAndInteriorZoneId()
+        # Collect toon IDs from elevator seats before they are cleared
+        toonIds = [avId for avId in self.elevator.seats if avId]
+        self.interior._expectedToonCount = len(toonIds)
+        self.interior.setZoneId(interiorZoneId)
+        self.interior.setExtZoneId(exteriorZoneId)
+        self.interior.setDistBldgDoId(self.doId)
+        self.interior.setNumFloors(self.numFloors)
+        self.interior.setShopOwnerNpcId(0)
+        self.interior.setToons(toonIds, 0)
+        self.interior.setState('WaitForAllToonsInside', 0)
         self.interior.generateWithRequired(interiorZoneId)
+        # setToons is broadcast ram but NOT required, so it is not sent by
+        # generateWithRequired.  Explicitly push it so the state server stores
+        # the toon list and clients receive it when they gain interest.
+        self.interior.sendUpdate('setToons', [toonIds, 0])
+        # Pick a deterministic SOS NPC from the Sellbot FO shopkeeper pool
+        # (7001–7009) and broadcast it so the penthouse outro dialogue can
+        # display a real name instead of "None".
+        random.seed(self.interior.doId)
+        sosNpcId = random.randint(7001, 7009)
+        self.interior._sosNpcId = sosNpcId
+        self.interior.sendUpdate('setSOSNpcId', [sosNpcId])
 
     def deleteSuitInterior(self):
         if hasattr(self, 'interior'):

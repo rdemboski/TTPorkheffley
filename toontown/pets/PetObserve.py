@@ -87,7 +87,7 @@ class PetActionObserve(PetObserve):
         petBrain._handleActionObserve(self)
 
     def __repr__(self):
-        return '%s(%s,%s)' % (self.__class__.__name__, Actions.getString(self.action), self.avId)
+        return '%s(%s,%s)' % (self.__class__.__name__, Actions(self.action).name if not isinstance(self.action, Actions) else self.action.name, self.avId)
 
 
 class PetPhraseObserve(PetObserve):
@@ -109,7 +109,7 @@ class PetPhraseObserve(PetObserve):
         petBrain._handlePhraseObserve(self)
 
     def __repr__(self):
-        return '%s(%s,%s)' % (self.__class__.__name__, Phrases.getString(self.petPhrase), self.avId)
+        return '%s(%s,%s)' % (self.__class__.__name__, Phrases(self.petPhrase).name if not isinstance(self.petPhrase, Phrases) else self.petPhrase.name, self.avId)
 
 
 class SCObserve(PetPhraseObserve):

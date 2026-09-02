@@ -61,6 +61,7 @@ class DistributedPartyManager(DistributedObject):
          inviteeIds])
 
     def addPartyResponse(self, hostId, errorCode):
+        errorCode = PartyGlobals.AddPartyErrorCode(errorCode)
         messenger.send('addPartyResponseReceived', [hostId, errorCode])
         if hasattr(base.localAvatar, 'creatingNewPartyWithMagicWord'):
             if base.localAvatar.creatingNewPartyWithMagicWord:
@@ -68,7 +69,7 @@ class DistributedPartyManager(DistributedObject):
                 if errorCode == PartyGlobals.AddPartyErrorCode.AllOk:
                     base.localAvatar.setChatAbsolute('New party entered into database successfully.', CFSpeech | CFTimeout)
                 else:
-                    base.localAvatar.setChatAbsolute('New party creation failed : %s' % PartyGlobals.AddPartyErrorCode.getString(errorCode), CFSpeech | CFTimeout)
+                    base.localAvatar.setChatAbsolute('New party creation failed : %s' % errorCode.name, CFSpeech | CFTimeout)
 
     def requestPartyZone(self, avId, zoneId, callback):
         if zoneId < 0:

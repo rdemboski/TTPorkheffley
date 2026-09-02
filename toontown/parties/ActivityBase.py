@@ -1,8 +1,14 @@
+from toontown.parties.PartyGlobals import ActivityIds
 
 
 class ActivityBase:
 
     def __init__(self, activityId, x, y, h):
+        if not isinstance(activityId, ActivityIds):
+            try:
+                activityId = ActivityIds(activityId)
+            except ValueError:
+                pass
         self.activityId = activityId
         self.x = x
         self.y = y

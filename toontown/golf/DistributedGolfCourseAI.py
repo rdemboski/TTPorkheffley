@@ -680,31 +680,10 @@ class DistributedGolfCourseAI(DistributedObjectAI.DistributedObjectAI, FSM):
             else:
                 totalScores.append((avId, 255, aimTime))
 
-        def scoreCompareNoTime(tupleA, tupleB):
-            if tupleA[1] > tupleB[1]:
-                return 1
-            elif tupleA[1] == tupleB[1]:
-                return 0
-            else:
-                return -1
-
-        def scoreCompareWithTime(tupleA, tupleB):
-            if tupleA[1] > tupleB[1]:
-                return 1
-            elif tupleA[1] == tupleB[1]:
-                if tupleA[2] > tupleB[2]:
-                    return 1
-                elif tupleA[2] == tupleB[2]:
-                    return 0
-                else:
-                    return -1
-            else:
-                return -1
-
         if GolfGlobals.TIME_TIE_BREAKER:
-            totalScores.sort(scoreCompareWithTime)
+            totalScores.sort(key=lambda t: (t[1], t[2]))
         else:
-            totalScores.sort(scoreCompareNoTime)
+            totalScores.sort(key=lambda t: t[1])
         curRank = 0
         oldScore = 0
         oldTime = 0

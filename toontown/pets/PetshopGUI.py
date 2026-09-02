@@ -358,7 +358,7 @@ class PetshopGUI(DirectObject):
                     descList.append('\t%s' % trait)
 
                 descList.append(TTLocalizer.PetshopDescCost % cost)
-                self.petDesc.append(descList.join('\n'))
+                self.petDesc.append('\n'.join(descList))
                 self.petCost.append(cost)
 
         def destroy(self):

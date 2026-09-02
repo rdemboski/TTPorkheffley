@@ -234,6 +234,10 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         self.removeGMIcon()
         if self.doId in self.cr.toons:
             del self.cr.toons[self.doId]
+        if self.customModelActor:
+            self.customModelActor.cleanup()
+            self.customModelActor.removeNode()
+            self.customModelActor = None
         DistributedPlayer.DistributedPlayer.disable(self)
         return
 
@@ -908,7 +912,30 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         timestamp = globalClockDelta.getFrameNetworkTime()
         self.sendUpdate('setAnimState', [animName, animMultiplier, timestamp])
 
+    CUSTOM_MODEL_ANIM_MAP = {
+        'neutral':      'idle',
+        'walk':         'walk',
+        'run':          'walk',
+        'swim':         'swim',
+        'swimhold':     'swim',
+        'dive':         'swim',
+        'jumpSquat':    'idle',
+        'jump':         'idle',
+        'jumpAirborne': 'idle',
+        'jumpLand':     'idle',
+        'dance':        'dance',
+        'victory':      'dance',
+        'Happy':        'idle',
+        'Sad':          'idle',
+        'Sleep':        'idle',
+        'Emote':        'idle'
+    }
+
     def setAnimState(self, animName, animMultiplier = 1.0, timestamp = None, animType = None, callback = None, extraArgs = []):
+        if hasattr(self, 'customModelActor') and self.customModelActor:
+            mapped = self.CUSTOM_MODEL_ANIM_MAP.get(animName, 'idle')
+            self._applyCustomModelAnim(mapped)
+        
         if not animName or animName == 'None':
             return
         if timestamp == None:
@@ -2521,7 +2548,7 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
                                 self.whisperSCTo(5302, toonId, 0)
 
     def updateInvite(self, inviteKey, newStatus):
-        DistributedToon.partyNotify.debug('updateInvite( inviteKey=%d, newStatus=%s )' % (inviteKey, InviteStatus.getString(newStatus)))
+        DistributedToon.partyNotify.debug('updateInvite( inviteKey=%d, newStatus=%s )' % (inviteKey, InviteStatus(newStatus).name if not isinstance(newStatus, InviteStatus) else newStatus.name))
         for invite in self.invites:
             if invite.inviteKey == inviteKey:
                 invite.status = newStatus
@@ -2529,7 +2556,7 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
                 break
 
     def updateReply(self, partyId, inviteeId, newStatus):
-        DistributedToon.partyNotify.debug('updateReply( partyId=%d, inviteeId=%d, newStatus=%s )' % (partyId, inviteeId, InviteStatus.getString(newStatus)))
+        DistributedToon.partyNotify.debug('updateReply( partyId=%d, inviteeId=%d, newStatus=%s )' % (partyId, inviteeId, InviteStatus(newStatus).name if not isinstance(newStatus, InviteStatus) else newStatus.name))
         for partyReplyInfoBase in self.partyReplyInfoBases:
             if partyReplyInfoBase.partyId == partyId:
                 for reply in partyReplyInfoBase.replies:
@@ -2749,6 +2776,10 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
 
     def getLastSeen(self):
         return self.lastSeen
+    
+    def setCustomModel(self, modelId):
+        self.customModel = modelId
+        self.generateCustomModel(modelId)
 
 
 @magicWord(category=CATEGORY_MODERATION)

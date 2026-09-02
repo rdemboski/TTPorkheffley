@@ -604,9 +604,12 @@ class Pet(Avatar.Avatar):
 
     def stopBlink(self):
         taskMgr.remove(self.__blinkName)
-        self.eyesOpen()
+        if hasattr(self, 'eyes') and self.eyes:
+            self.eyesOpen()
 
     def eyesOpen(self):
+        if not (hasattr(self, 'eyes') and self.eyes):
+            return
         self.eyes.setColor(1, 1, 1, 1)
         self.eyes.setTexture(self.eyesOpenTexture, 1)
         self.rightPupil.show()
@@ -616,6 +619,8 @@ class Pet(Avatar.Avatar):
             self.leftHighlight.show()
 
     def eyesClose(self):
+        if not (hasattr(self, 'eyes') and self.eyes):
+            return
         self.eyes.setColor(self.color)
         self.eyes.setTexture(self.eyesClosedTexture, 1)
         self.rightPupil.hide()

@@ -323,7 +323,8 @@ class DistributedPartyDanceActivityBase(DistributedPartyActivity):
         self.d_updateDancingToon(state, anim)
 
     def d_updateDancingToon(self, state, anim):
-        self.sendUpdate('updateDancingToon', [state, anim])
+        stateInt = state.value if isinstance(state, ToonDancingStates) else int(state)
+        self.sendUpdate('updateDancingToon', [stateInt, anim])
 
     def setDancingToonState(self, toonId, state, anim):
         if toonId != base.localAvatar.doId and toonId in self.dancingToonFSMs:
@@ -331,14 +332,14 @@ class DistributedPartyDanceActivityBase(DistributedPartyActivity):
 
     def _requestToonState(self, toonId, state, anim):
         if toonId in self.dancingToonFSMs:
-            state = ToonDancingStates.getString(state)
+            state = ToonDancingStates(state).name if not isinstance(state, str) else state
             curState = self.dancingToonFSMs[toonId].getCurrentOrNextState()
             try:
                 self.dancingToonFSMs[toonId].request(state, anim)
             except FSM.RequestDenied:
                 self.notify.warning('could not go from state=%s to state %s' % (curState, state))
 
-            if state == ToonDancingStates.getString(ToonDancingStates.Cleanup):
+            if state == ToonDancingStates.Cleanup.name:
                 self.notify.debug('deleting this fsm %s' % self.dancingToonFSMs[toonId])
                 del self.dancingToonFSMs[toonId]
                 if self.localToonDanceSequence:

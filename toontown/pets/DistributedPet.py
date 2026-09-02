@@ -98,6 +98,15 @@ class DistributedPet(DistributedSmoothNode.DistributedSmoothNode, Pet.Pet, PetBa
 
     def setPetName(self, petName):
         self.petName = petName
+        # Keep the Avatar/NodePath name in sync so getName() works on bFake holders
+        # (announceGenerate calls Pet.Pet.setName explicitly, but bFake holders skip it).
+        Pet.Pet.setName(self, petName)
+
+    def _setStyle(self, dna):
+        """Set the pet's style tuple directly without triggering 3D model generation.
+        Used by the avatar-detail uberdog response path (addPetToFriendsMap /
+        ReturnPetDlg) so we get getDNA() without building the full model."""
+        self.style = dna
         DistributedSmoothNode.DistributedSmoothNode.setName(self, self.petName)
         if self.isGenerated():
             Pet.Pet.setName(self, self.petName)
@@ -165,6 +174,8 @@ class DistributedPet(DistributedSmoothNode.DistributedSmoothNode, Pet.Pet, PetBa
         return max(0.0, t)
 
     def updateOfflineMood(self):
+        if not hasattr(self, 'mood') or not hasattr(self, 'lastKnownMood'):
+            return
         self.mood.driftMood(dt=self.getTimeSinceLastSeen(), curMood=self.lastKnownMood)
 
     def __handleMoodSet(self, component, value):
@@ -252,14 +263,16 @@ class DistributedPet(DistributedSmoothNode.DistributedSmoothNode, Pet.Pet, PetBa
         if self.isLocalToon:
             base.localAvatar.enableSmartCameraViews()
             self.freeAvatar()
-        self.ignore(self.mood.getDominantMoodChangeEvent())
-        self.ignore(self.mood.getMoodChangeEvent())
-        if hasattr(self, 'lastKnownMood'):
-            self.lastKnownMood.destroy()
-            del self.lastKnownMood
-        self.mood.destroy()
-        del self.mood
-        del self.traits
+        if hasattr(self, 'mood'):
+            self.ignore(self.mood.getDominantMoodChangeEvent())
+            self.ignore(self.mood.getMoodChangeEvent())
+            if hasattr(self, 'lastKnownMood'):
+                self.lastKnownMood.destroy()
+                del self.lastKnownMood
+            self.mood.destroy()
+            del self.mood
+        if hasattr(self, 'traits'):
+            del self.traits
         self.removeActive()
         if not self.bFake:
             self.stopSmooth()

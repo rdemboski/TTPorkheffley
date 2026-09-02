@@ -168,12 +168,12 @@ class CatalogItemPanel(DirectFrame):
             emblemIcon = loader.loadModel('phase_3.5/models/gui/tt_m_gui_gen_emblemIcons')
             silverModel = emblemIcon.find('**/tt_t_gui_gen_emblemSilver')
             goldModel = emblemIcon.find('**/tt_t_gui_gen_emblemGold')
-            if ToontownGlobals.EmblemTypes.Silver < len(emblemPrices):
-                silverPrice = emblemPrices[ToontownGlobals.EmblemTypes.Silver]
+            if ToontownGlobals.EmblemTypes.Silver.value < len(emblemPrices):
+                silverPrice = emblemPrices[ToontownGlobals.EmblemTypes.Silver.value]
                 if silverPrice:
                     self.silverPriceLabel = DirectLabel(parent=self, relief=None, pos=(0, 0, -0.3), scale=priceScale, image=silverModel, image_pos=(-0.4, 0, 0.4), text=str(silverPrice), text_fg=(0.95, 0.95, 0, 1), text_shadow=(0, 0, 0, 1), text_font=ToontownGlobals.getSignFont(), text_align=TextNode.ALeft)
-            if ToontownGlobals.EmblemTypes.Gold < len(emblemPrices):
-                goldPrice = emblemPrices[ToontownGlobals.EmblemTypes.Gold]
+            if ToontownGlobals.EmblemTypes.Gold.value < len(emblemPrices):
+                goldPrice = emblemPrices[ToontownGlobals.EmblemTypes.Gold.value]
                 if goldPrice:
                     self.goldPriceLabel = DirectLabel(parent=self, relief=None, pos=(0, 0, -0.3), scale=priceScale, image=goldModel, image_pos=(-0.4, 0, 0.4), text=str(goldPrice), text_fg=(0.95, 0.95, 0, 1), text_shadow=(0, 0, 0, 1), text_font=ToontownGlobals.getSignFont(), text_align=TextNode.ALeft)
             numPrices = 0
@@ -362,8 +362,8 @@ class CatalogItemPanel(DirectFrame):
         else:
             emblemPrices = self['item'].getEmblemPrices()
             if emblemPrices:
-                silver = emblemPrices[ToontownGlobals.EmblemTypes.Silver]
-                gold = emblemPrices[ToontownGlobals.EmblemTypes.Gold]
+                silver = emblemPrices[ToontownGlobals.EmblemTypes.Silver.value]
+                gold = emblemPrices[ToontownGlobals.EmblemTypes.Gold.value]
                 price = self['item'].getPrice(self['type'])
                 if price and silver and gold:
                     message = TTLocalizer.CatalogVerifyPurchaseBeanSilverGold % {'item': self['item'].getName(),

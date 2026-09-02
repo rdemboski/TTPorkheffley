@@ -39,7 +39,7 @@ class PartyInfoBase:
         string += 'start=%s ' % self.startTime
         string += 'end=%s ' % self.endTime
         string += 'isPrivate=%s ' % self.isPrivate
-        string += 'inviteTheme=%s ' % InviteTheme.getString(self.inviteTheme)
+        string += 'inviteTheme=%s ' % (InviteTheme(self.inviteTheme).name if not isinstance(self.inviteTheme, InviteTheme) else self.inviteTheme.name)
         string += 'activityList=%s ' % self.activityList
         string += 'decors=%s ' % self.decors
         string += 'status=%s' % self.status

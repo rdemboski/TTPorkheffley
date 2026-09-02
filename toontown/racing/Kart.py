@@ -26,7 +26,11 @@ class Kart(NodePath, ShadowCaster.ShadowCaster):
 
     def __init__(self):
         NodePath.__init__(self)
-        an = ActorNode('vehicle-test')
+        try:
+            from panda3d.core import ActorNode
+            an = ActorNode('vehicle-test')
+        except ImportError:
+            an = PandaNode('vehicle-test')
         anp = NodePath(an)
         NodePath.assign(self, anp)
         self.actorNode = an

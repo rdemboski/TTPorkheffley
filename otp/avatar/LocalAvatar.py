@@ -421,6 +421,12 @@ class LocalAvatar(DistributedAvatar.DistributedAvatar, DistributedSmoothNode.Dis
             return
         self.avatarControlsEnabled = 1
         self.setupAnimationEvents()
+        # If the current walker requires collisions to be active (e.g. GravityWalker)
+        # but they aren't (e.g. we're in a minigame that bypassed the standard walker),
+        # skip the enable to avoid an assertion error.
+        controls = getattr(self.controlManager, 'currentControls', None)
+        if controls is not None and hasattr(controls, 'collisionsActive') and not controls.collisionsActive:
+            return
         self.controlManager.enable()
 
     def disableAvatarControls(self):
@@ -628,7 +634,7 @@ class LocalAvatar(DistributedAvatar.DistributedAvatar, DistributedSmoothNode.Dis
             camera.setPos(savePos)
             camera.setHpr(saveHpr)
             taskMgr.remove('posCamera')
-            camera.lerpPosHpr(x, y, z, h, p, r, time, task='posCamera')
+            LerpPosHprInterval(camera, time, Point3(x, y, z), Point3(h, p, r), name='posCamera').start()
 
     def getClampedAvatarHeight(self):
         return max(self.getHeight(), 3.0)

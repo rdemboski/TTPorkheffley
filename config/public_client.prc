@@ -1,11 +1,11 @@
-# This is the PRC configuration file for a published TTR client. Note that only
+# This is the PRC configuration file for a published TTPH client. Note that only
 # this file and Panda3D's Confauto.prc are included. Any relevant directives in
 # Config.prc should be reproduced here.
 
 # Client settings
-window-title Toontown Rewritten [PRIVATE]
-server-version ttroff-beta-v2.12.2
-sync-video #f
+window-title Toontown Porkheffley
+server-version ttph-v2.0.0
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -14,8 +14,8 @@ load-display pandagl
 
 
 # New Addons!
-want-WASD #t
-tt-framerate #t
+want-WASD #f
+tt-framerate #f
 want-new-ttrloader #t
 want-new-toonhall #t
 want-max-font #t
@@ -39,11 +39,12 @@ vfs-mount phase_10.mf /
 vfs-mount phase_11.mf /
 vfs-mount phase_12.mf /
 vfs-mount phase_13.mf /
+vfs-mount custom.mf /
 default-model-extension .bam
 
 
-# Now that we've loaded the phase files, tell panda to trust the TTROffCA
-# ssl-certificates /phase_3/etc/TTROffCA.crt
+# Now that we've loaded the phase files, tell panda to trust the TTPHCA
+# ssl-certificates /phase_3/etc/TTPHCA.crt
 
 
 # This is the shared secret for CSMUD login
@@ -52,10 +53,12 @@ csmud-secret VG9vbnRvd25SZXdyaXR0ZW5Qcml2YXRlQ2xpZW50U2VydmljZXNNYW5hZ2VyVWJlckR
 
 
 # DC Files
-#dc-file config/ttroff.dc Automatically wrapped into the code.
+#dc-file config/ttph.dc Automatically wrapped into the code.
 
 
 # Server settings
+accountdb-type web
+account-server-api https://ttph.azurewebsites.net
 want-rpc-server #f
 rpc-server-endpoint http://localhost:8080/
 eventlog-host 127.0.0.1
@@ -102,5 +105,6 @@ mega-invasion-cog-type tm
 
 
 # Working (Custom) Addons!
-want-toonfest #t
+want-cogdominiums #t
+want-toonfest #f
 want-doomsday #f

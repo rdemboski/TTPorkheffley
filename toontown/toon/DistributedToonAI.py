@@ -230,6 +230,7 @@ class DistributedToonAI(DistributedPlayerAI.DistributedPlayerAI, DistributedSmoo
         self.magicWordTeleportRequests = []
         self.webAccountId = 0
         self.hasQuests = False
+        self.customModel = 0
 
         # KeepAlive
         self.keepAliveTask = None
@@ -4691,6 +4692,16 @@ class DistributedToonAI(DistributedPlayerAI.DistributedPlayerAI, DistributedSmoo
 
     def d_setLastSeen(self, timestamp):
         self.sendUpdate('setLastSeen', [int(timestamp)])
+        
+    def setCustomModel(self, modelId): 
+        self.customModel = modelId
+        
+    def d_setCustomModel(self, modelId): 
+        self.sendUpdate('setCustomModel', [modelId])
+        
+    def b_setCustomModel(self, modelId):
+        self.setCustomModel(modelId)
+        self.d_setCustomModel(modelId)
 
 @magicWord(category=CATEGORY_CHARACTERSTATS, types=[int, int, int])
 def setCE(CEValue, CEHood=0, CEExpire=0):
@@ -4805,6 +4816,14 @@ def setMoney(moneyVal):
         return 'Money value must be between 40 and 250.'
     spellbook.getTarget().b_setMoney(moneyVal)
     return 'maxMoney set to %s' % moneyVal
+
+@magicWord(category=CATEGORY_CHARACTERSTATS, types=[int], aliases=['jb', 'jellybeans'])
+def addBankMoney(amount=1000):
+    """Add jellybeans to the target's bank. Amount defaults to 1000."""
+    toon = spellbook.getTarget()
+    newBank = min(toon.bankMoney + amount, toon.maxBankMoney)
+    toon.b_setBankMoney(newBank)
+    return 'Bank jellybeans set to %s / %s' % (newBank, toon.maxBankMoney)
 
 @magicWord(category=CATEGORY_CHARACTERSTATS, types=[int])
 def setFishingRod(rodVal):
@@ -5641,3 +5660,9 @@ def phrase(phraseStringOrId):
         av.customMessages.append(id)
         av.d_setCustomMessages(av.customMessages)
         return "Added new phrase to %s's custom phrases." % av.getName()
+
+@magicWord(category=CATEGORY_CHARACTERSTATS, types=[int])
+def customModel(modelId):
+    """Set custom player model. Use 0 to revert to toon."""
+    spellbook.getTarget().b_setCustomModel(modelId)
+    return 'Custom model set to %d' % modelId

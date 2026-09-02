@@ -193,6 +193,10 @@ class CogdoMazeGame(DirectObject):
 
     def initPlayers(self):
         for toonId in self.distGame.getToonIds():
+            # Idempotent: skip toons that were already added (e.g. on a retry
+            # triggered by setToons() resolving a late-generating toon DO).
+            if toonId in self.toonId2Player:
+                continue
             toon = self.distGame.getToon(toonId)
             if toon != None:
                 if toon.isLocal():
@@ -274,7 +278,10 @@ class CogdoMazeGame(DirectObject):
         self.guiMgr.mazeMapGui.removeToon(player.toon)
 
     def handleToonLeft(self, toonId):
-        self._removePlayer(self.toonId2Player[toonId])
+        player = self.toonId2Player.get(toonId)
+        if player is None:
+            return
+        self._removePlayer(player)
 
     def __startUpdateTask(self):
         self.__stopUpdateTask()
@@ -338,7 +345,9 @@ class CogdoMazeGame(DirectObject):
             self.distGame.b_toonHitBySuit(suitType, suitNum)
 
     def toonHitBySuit(self, toonId, suitType, suitNum, elapsedTime = 0.0):
-        player = self.toonId2Player[toonId]
+        player = self.toonId2Player.get(toonId)
+        if player is None:
+            return
         if player.state == 'Normal':
             player.request('Hit', elapsedTime)
 
@@ -346,6 +355,10 @@ class CogdoMazeGame(DirectObject):
         suit = self.suitsById[suitNum]
         self.dropMemos(suit)
         self.removeSuit(suit)
+        # When all boss cogs are defeated, open the exit for everyone.
+        if not self.shakers and not self._exit.revealed and not self._exit.isOpen():
+            self.toonRevealsDoor(self.localPlayer.toon.doId)
+            self.distGame.d_sendRequestAction(Globals.GameActions.RevealDoor, 0)
 
     def dropMemos(self, suit):
         numDrops = suit.memos
@@ -426,7 +439,9 @@ class CogdoMazeGame(DirectObject):
             self.distGame.b_toonHitByDrop()
 
     def toonHitByDrop(self, toonId):
-        player = self.toonId2Player[toonId]
+        player = self.toonId2Player.get(toonId)
+        if player is None:
+            return
         player.hitByDrop()
 
     def handleLocalToonMeetsGagPickup(self, collEntry):
@@ -439,7 +454,9 @@ class CogdoMazeGame(DirectObject):
         return
 
     def hasGag(self, toonId, elapsedTime = 0.0):
-        player = self.toonId2Player[toonId]
+        player = self.toonId2Player.get(toonId)
+        if player is None:
+            return
         player.equipGag()
 
     def handleLocalToonMeetsWaterCooler(self, collEntry):
@@ -457,7 +474,9 @@ class CogdoMazeGame(DirectObject):
         self.distGame.b_toonUsedGag(x, y, h)
 
     def toonUsedGag(self, toonId, x, y, h, elapsedTime = 0.0):
-        player = self.toonId2Player[toonId]
+        player = self.toonId2Player.get(toonId)
+        if player is None:
+            return
         heading = h
         pos = Point3(x, y, 0)
         gag = player.showToonThrowingGag(heading, pos)
@@ -512,7 +531,9 @@ class CogdoMazeGame(DirectObject):
         self.localPlayer.request('Done')
 
     def toonEntersDoor(self, toonId):
-        player = self.toonId2Player[toonId]
+        player = self.toonId2Player.get(toonId)
+        if player is None:
+            return
         self.guiMgr.mazeMapGui.removeToon(player.toon)
         self._exit.playerEntersDoor(player)
         self.localPlayer.handleToonEntersDoor(toonId, self._exit)
@@ -531,7 +552,9 @@ class CogdoMazeGame(DirectObject):
 
     def pickUp(self, toonId, pickupNum, elapsedTime = 0.0):
         self.notify.debugCall()
-        player = self.toonId2Player[toonId]
+        player = self.toonId2Player.get(toonId)
+        if player is None:
+            return
         pickup = self.pickups[pickupNum]
         if not pickup.wasPickedUp():
             pickup.pickUp(player.toon, elapsedTime)
@@ -549,6 +572,9 @@ class CogdoMazeGame(DirectObject):
 
         pos = self.maze.tile2world(x, y)
         player.toon.setPos(pos[0], pos[1], 0)
+        # Face into the maze (north / +Y) so toons don't start looking
+        # backwards toward the entrance elevator.
+        player.toon.setH(0)
         self.guiMgr.mazeMapGui.addToon(player.toon, x, y)
 
     def handleLocalToonEntersDoor(self, door):
@@ -567,7 +593,16 @@ class CogdoMazeGame(DirectObject):
         if toonId == self.localPlayer.toon.doId:
             for player in self.players:
                 player.removeGag()
-
+            # Stop the local player and trigger the building exit so the
+            # toon is returned to the playground rather than left frozen
+            # in the maze while the server timer winds down.
+            if self.localPlayer.getCurrentOrNextState() not in ('Done', 'Off'):
+                self.localPlayer.request('Done')
+            interior = self.distGame.getInterior()
+            if interior:
+                # The building is NOT in waitForVictorsFromCogdo on the fail
+                # path, so use teleportIn to avoid the street-place softlock.
+                interior.exitCogdoBuilding(how='teleportIn')
         elif toonId in list(self.toonId2Player.keys()):
             player = self.toonId2Player[toonId]
             player.removeGag()

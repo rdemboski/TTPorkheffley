@@ -217,11 +217,10 @@ class ToontownClientRepository(OTPClientRepository.OTPClientRepository):
         self.clearFriendState()
         if self.music == None and base.musicManagerIsValid:
             if ConfigVariableBool('want-retro-rewritten', False):
-                self.music = base.musicManager.getSound('phase_3/audio/bgm/ttr_theme.ogg')
+                self.music = base.musicManager.getSound('phase_3/audio/bgm/tt_theme.ogg')
             else:
                 self.music = base.musicManager.getSound('phase_3/audio/bgm/ttr_d_theme_phase2.ogg')
             if self.music:
-                self.music.setLoopStart(2.9)
                 self.music.setLoop(True)
                 self.music.setVolume(0.8)
                 self.music.play()
@@ -295,7 +294,6 @@ class ToontownClientRepository(OTPClientRepository.OTPClientRepository):
             self.music = None
         if not ConfigVariableBool('want-retro-rewritten', False):
             base.loadingScreen.exitMusic()
-        base.loadingScreen.exitMusic()
         self.avChoice.exit()
         self.avChoice.unload()
         self.avChoice = None

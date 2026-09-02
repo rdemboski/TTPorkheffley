@@ -212,12 +212,12 @@ class ToonAvatarPanel(AvatarPanelBase.AvatarPanelBase):
 
 
 
-        if base.cr.avatarFriendsManager.checkIgnored(self.avId):
+        if hasattr(self, 'secretsButton') and base.cr.avatarFriendsManager.checkIgnored(self.avId):
             self.secretsButton['state'] = DGG.DISABLED
 
 
         from toontown.coghq import CogHQBossBattle
-        if isinstance(base.cr.playGame.getPlace(), CogHQBossBattle.CogHQBossBattle) and \
+        if hasattr(self, 'secretsButton') and isinstance(base.cr.playGame.getPlace(), CogHQBossBattle.CogHQBossBattle) and \
                 base.localAvatar.getGameAccess() != OTPGlobals.AccessFull:
             self.secretsButton['state'] = DGG.DISABLED
 
@@ -329,7 +329,8 @@ class ToonAvatarPanel(AvatarPanelBase.AvatarPanelBase):
             self.reportButton['state'] = DGG.DISABLED
         self.ignoreButton['state'] = DGG.DISABLED
         self.goToButton['state'] = DGG.DISABLED
-        self.secretsButton['state'] = DGG.DISABLED
+        if hasattr(self, 'secretsButton'):
+            self.secretsButton['state'] = DGG.DISABLED
         self.whisperButton['state'] = DGG.DISABLED
         self.petButton['state'] = DGG.DISABLED
         self.friendButton['state'] = DGG.DISABLED

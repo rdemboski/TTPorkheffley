@@ -31,7 +31,7 @@ class game:
     name = 'toontown'
     process = 'client'
 
-print('TTROffline: Ongoing project by RegDogg')
+print('TTPH: Custom server by rdemboski')
 print('ToontownStart: Starting the game.')
 builtins.game = game()
 import time
@@ -60,7 +60,7 @@ settings.loadFromSettings()
 if ConfigVariableBool('want-retro-rewritten', False):
     # Poll for game finished
     pollingDelay = 0.5
-    print('TTROffline: Ongoing project by RegDogg')
+    print('TTPH: Custom server by rdemboski')
     print('ToontownStart: Polling for game2 to finish...')
     while not launcher.getGame2Done():
         time.sleep(pollingDelay)
@@ -150,9 +150,9 @@ if not ConfigVariableBool('want-retro-rewritten', False):
     base.cr = cr
     loader.endBulkLoad('init')
 else:
-    # Prepare Music
+    # Prepare Music for old loading screen
     if base.musicManagerIsValid:
-        music = base.musicManager.getSound('phase_3/audio/bgm/ttr_theme.ogg')
+        music = base.musicManager.getSound('phase_3/audio/bgm/tt_theme.ogg')
         if music:
             music.setLoop(1)
             music.setVolume(0.8)
@@ -229,6 +229,13 @@ if config.ConfigVariableBool('auto-start-server', False).getValue():
 else:
     if not ConfigVariableBool('want-retro-rewritten', False):
         messenger.send('AllowPressKey')
+    else:
+        # Retro mode with a dedicated server: base.startShow is never called
+        # in the non-retro block above, so we must call it here.
+        if not launcher.isDummy():
+            base.startShow(cr, launcher.getGameServer())
+        else:
+            base.startShow(cr)
 
 if ConfigVariableBool('want-retro-rewritten', False):
     backgroundNodePath.reparentTo(hidden)

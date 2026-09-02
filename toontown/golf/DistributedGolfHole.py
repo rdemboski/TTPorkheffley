@@ -1520,8 +1520,7 @@ class DistributedGolfHole(DistributedPhysicsWorld.DistributedPhysicsWorld, FSM, 
         self.needToDoFlyOver = False
         bamFile = self.holeInfo['terrainModel']
         fileName = bamFile.split('/')[-1]
-        dotIndex = fileName.find('.')
-        baseName = fileName[0:dotIndex]
+        baseName = fileName.rsplit('.', 1)[0]  # handles both 'hole1' and 'hole1.bam'
         camModelName = baseName + '_cammodel'
         cameraName = baseName + '_camera'
         path = bamFile[0:bamFile.find(fileName)]

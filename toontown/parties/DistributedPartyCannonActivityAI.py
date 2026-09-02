@@ -6,8 +6,12 @@ from . import PartyGlobals
 class DistributedPartyCannonActivityAI(DistributedPartyActivityAI):
     notify = DirectNotifyGlobal.directNotify.newCategory("DistributedPartyCannonActivityAI")
     
-    def __init__(self, air):
-        DistributedPartyActivityAI.__init__(self, air)
+    def __init__(self, air, parent=None, activityTuple=None):
+        if parent is not None and activityTuple is not None:
+            DistributedPartyActivityAI.__init__(self, air, parent, activityTuple)
+        else:
+            # Legacy call with air only — supply dummy values
+            DistributedPartyActivityAI.__init__(self, air, 0, (0, 0, 0, 0))
         self.cloudColors = {}
         self.cloudsHit = {}
 

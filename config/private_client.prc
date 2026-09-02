@@ -1,11 +1,11 @@
-# This is the PRC configuration file for a published TTR client. Note that only
+# This is the PRC configuration file for a published TTPH client. Note that only
 # this file and Panda3D's Confauto.prc are included. Any relevant directives in
 # Config.prc should be reproduced here.
 
 # Client settings
-window-title Toontown Rewritten [OFFLINE]
-server-version ttroff-beta-v2.12.2
-sync-video #f
+window-title Toontown Porkheffley
+server-version ttph-v2.0.0
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -14,8 +14,8 @@ load-display pandagl
 
 
 # New Addons!
-want-WASD #t
-tt-framerate #t
+want-WASD #f
+tt-framerate #f
 want-new-toonhall #t
 want-max-font #t
 
@@ -37,14 +37,17 @@ vfs-mount phase_10.mf /
 vfs-mount phase_11.mf /
 vfs-mount phase_12.mf /
 vfs-mount phase_13.mf /
+vfs-mount custom.mf /
 default-model-extension .bam
 
 
 # DC Files
-#dc-file config/ttroff.dc Automatically wrapped into the code.
+#dc-file config/ttph.dc Automatically wrapped into the code.
 
 
 # Server settings
+accountdb-type web
+account-server-api https://ttph.azurewebsites.net
 want-rpc-server #f
 rpc-server-endpoint http://localhost:8080/
 eventlog-host 127.0.0.1
@@ -58,7 +61,7 @@ mongodb-url mongodb://127.0.0.1/astron
 want-pets #t
 want-news-tab #f
 want-news-page #f
-want-accessories #f
+want-accessories #t
 want-parties #t
 want-gardening #t
 want-gifting #f
@@ -91,5 +94,6 @@ mega-invasion-cog-type tm
 
 
 # Working (Custom) Addons!
-want-toonfest #t
+want-cogdominiums #t
+want-toonfest #f
 want-doomsday #f

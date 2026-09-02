@@ -13,6 +13,8 @@ import time
 import hmac
 import hashlib
 import json
+import urllib.request
+import urllib.error
 from .ClientServicesManager import FIXED_KEY
 
 REPORT_REASONS = [
@@ -91,6 +93,108 @@ class RemoteAccountDB:
 
         self.csm.air.rpc.call('redeemCookie', cookie=cookie,
                               _callback=rpcCallback, _errback=rpcCallback)
+
+
+class WebAccountDB:
+    """
+    Account database that validates play tokens against the TTPHWebAPI.
+
+    The web API is responsible for credential validation and token issuance.
+    This class only handles the token->databaseId lookup; the databaseId->
+    astronAccountId mapping is kept in the local semidbm account-bridge file
+    exactly like LocalAccountDB does, so no Astron object IDs ever leave the
+    game server.
+
+    Config variables:
+      accountdb-type      web          (selects this class)
+      account-server-api  http://...   base URL of TTPHWebAPI (default: http://127.0.0.1:5000)
+    """
+
+    def __init__(self, csm):
+        self.csm = csm
+
+        # Re-use the same semidbm bridge as LocalAccountDB for databaseId->accountId.
+        if not config.ConfigVariableBool('want-mongo-client', False).getValue():
+            filename = config.GetString(
+                'account-bridge-filename', 'astron/databases/account-bridge-yaml')
+        else:
+            filename = config.GetString(
+                'account-bridge-filename', 'astron/databases/account-bridge-mongodb')
+        self.dbm = semidbm.open(filename, 'c')
+
+        self.apiUrl = config.ConfigVariableString(
+            'account-server-api', 'http://127.0.0.1:5000').getValue().rstrip('/')
+
+    def lookup(self, cookie, callback):
+        # cookie arrives as bytes from the HMAC-signed login message
+        if isinstance(cookie, bytes):
+            token = cookie.decode('utf-8', errors='replace')
+        else:
+            token = str(cookie)
+
+        if token.startswith('.'):
+            callback({'success': False, 'reason': 'Invalid cookie specified!'})
+            return
+
+        # Synchronous HTTP call to the web API — fast on LAN/localhost.
+        try:
+            data = json.dumps({'token': token}).encode('utf-8')
+            req = urllib.request.Request(
+                '%s/api/auth/validate-token' % self.apiUrl,
+                data=data,
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                result = json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            try:
+                error_body = json.loads(e.read())
+                reason = error_body.get('reason', 'Authentication server returned an error.')
+            except Exception:
+                reason = 'Authentication server returned HTTP %d.' % e.code
+            callback({'success': False, 'reason': reason})
+            return
+        except Exception as e:
+            callback({'success': False,
+                      'reason': 'Could not reach the account server: %s' % e})
+            return
+
+        if not result.get('success'):
+            callback({'success': False,
+                      'reason': result.get('reason', 'Token validation failed.')})
+            return
+
+        databaseId = result.get('databaseId')
+        if not databaseId:
+            callback({'success': False,
+                      'reason': 'Account server did not provide a databaseId.'})
+            return
+
+        adminAccess = result.get('adminAccess', 507)
+
+        # Resolve databaseId -> Astron accountId from the local bridge.
+        try:
+            accountId = int(self.dbm[str(databaseId)])
+        except KeyError:
+            accountId = 0  # New account; LoginAccountFSM will create it.
+
+        callback({
+            'success': True,
+            'accountId': accountId,
+            'databaseId': databaseId,
+            'adminAccess': adminAccess,
+        })
+
+    def storeAccountID(self, databaseId, accountId, callback):
+        self.dbm[str(databaseId)] = str(accountId)
+        if getattr(self.dbm, 'sync', None):
+            self.dbm.sync()
+            callback(True)
+        else:
+            self.csm.notify.warning(
+                'Unable to associate user %s with account %d!' % (databaseId, accountId))
+            callback(False)
 
 # Constants used by the naming FSM:
 WISHNAME_LOCKED = 0
@@ -854,11 +958,16 @@ class ClientServicesManagerUD(DistributedObjectGlobalUD):
         self.nameGenerator = NameGenerator()
 
         # Instantiate our account DB interface using config:
+        # accountdb-type = local  → semidbm file, any cookie is accepted (dev default)
+        # accountdb-type = web    → validates play tokens via TTPHWebAPI (production)
+        # accountdb-type = remote → Astron RPC-based external DB
         dbtype = config.ConfigVariableString('accountdb-type', 'local').getValue()
         if dbtype == 'local':
             self.accountDB = LocalAccountDB(self)
         elif dbtype == 'remote':
             self.accountDB = RemoteAccountDB(self)
+        elif dbtype == 'web':
+            self.accountDB = WebAccountDB(self)
         else:
             self.notify.error('Invalid account DB type configured: %s' % dbtype)
 

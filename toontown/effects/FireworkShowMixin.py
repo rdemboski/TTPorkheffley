@@ -239,6 +239,7 @@ class FireworkShowMixin:
             from toontown.hood import GSHood
             from toontown.hood import OZHood
             from toontown.hood import GZHood
+            from toontown.hood import PartyHood
 
             if isinstance(hood, TTHood.TTHood):
                 self.fireworkShow.setPos(150, 0, 80)

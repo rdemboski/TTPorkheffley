@@ -24,6 +24,9 @@ from otp.ai.MagicWordGlobal import *
 class DistributedSuitPlannerAI(DistributedObjectAI.DistributedObjectAI, SuitPlannerBase.SuitPlannerBase):
     CogdoPopFactor = config.GetFloat('cogdo-pop-factor', 1.5)
     CogdoRatio = min(1.0, max(0.0, config.GetFloat('cogdo-ratio', 0.5)))
+    # Field offices are extremely rare in Toontown Central; use a much lower
+    # ratio there so they appear occasionally but are not common.
+    CogdoRatioTTC = min(1.0, max(0.0, config.GetFloat('cogdo-ratio-ttc', 0.05)))
     SuitHoodInfo = [[2100,
       5,
       15,
@@ -989,7 +992,8 @@ class DistributedSuitPlannerAI(DistributedObjectAI.DistributedObjectAI, SuitPlan
         targetBuildingNum = min(targetBuildingNum, self.TOTAL_MAX_SUITS - self.numFlyInSuits)
         buildingDeficit = (targetBuildingNum - self.numBuildingSuits + 3) / 4
         while buildingDeficit > 0:
-            if not self.createNewSuit(suitBuildings, streetPoints):
+            isCogdo = random.random() < self._getCogdoRatio()
+            if not self.createNewSuit(suitBuildings, streetPoints, cogdoTakeover=isCogdo):
                 break
             buildingDeficit -= 1
 
@@ -1054,6 +1058,15 @@ class DistributedSuitPlannerAI(DistributedObjectAI.DistributedObjectAI, SuitPlan
             self.pendingBuildingHeights.remove(buildingHeight)
         building = self.buildingMgr.getBuilding(blockNumber)
         building.suitTakeOver(suitTrack, difficulty, buildingHeight)
+
+    def _getCogdoRatio(self):
+        """Return the cogdo spawn ratio for this planner's neighbourhood.
+        Toontown Central uses a much lower ratio so field offices are extremely
+        rare there, matching the original game's documented behaviour."""
+        hoodId = ZoneUtil.getCanonicalHoodId(self.zoneId)
+        if hoodId == ToontownGlobals.ToontownCentral:
+            return self.CogdoRatioTTC
+        return self.CogdoRatio
 
     def cogdoTakeOver(self, blockNumber, difficulty, buildingHeight):
         if self.pendingBuildingHeights.count(buildingHeight) > 0:

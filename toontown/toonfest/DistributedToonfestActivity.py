@@ -231,9 +231,9 @@ class DistributedToonfestActivity(DistributedObject.DistributedObject):
     def loadSign(self):
         actNameForSign = self.activityName
         if self.activityId == PartyGlobals.ActivityIds.PartyJukebox40:
-            actNameForSign = PartyGlobals.ActivityIds.getString(PartyGlobals.ActivityIds.PartyJukebox)
+            actNameForSign = PartyGlobals.ActivityIds.PartyJukebox.name
         elif self.activityId == PartyGlobals.ActivityIds.PartyDance20:
-            actNameForSign = PartyGlobals.ActivityIds.getString(PartyGlobals.ActivityIds.PartyDance)
+            actNameForSign = PartyGlobals.ActivityIds.PartyDance.name
         self.defaultSignModel = loader.loadModel('phase_13/models/parties/eventSign')
         self.sign = self.root.attachNewNode('%sSign' % self.activityName)
         self.signModel = self.defaultSignModel.copyTo(self.sign)

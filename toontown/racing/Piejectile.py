@@ -4,6 +4,10 @@ from direct.showbase.PythonUtil import *
 from direct.showbase.DirectObject import DirectObject
 from direct.task import Task
 from panda3d.core import *
+try:
+    from panda3d.core import PhysicsManager, LinearEulerIntegrator, ForceNode, LinearFrictionForce, LinearVectorForce, CollisionHandlerGravity
+except ImportError:
+    pass  # Classic physics not available in this Panda3D build
 from direct.fsm import FSM
 from direct.distributed import DistributedSmoothNode
 from otp.avatar import ShadowCaster
@@ -70,7 +74,6 @@ class Piejectile(DirectObject, FlyingGag):
         print('removing piejectile')
         taskMgr.remove(self.taskName)
         self.__undoCollisions()
-        self.physicsMgr.clearLinearForces()
         FlyingGag.delete(self)
         self.deleting = 1
         self.ignoreAll()
@@ -94,39 +97,22 @@ class Piejectile(DirectObject, FlyingGag):
         DistributedSmoothNode.DistributedSmoothNode.setPos(self, x, y, z)
 
     def getVelocity(self):
-        return self.actorNode.getPhysicsObject().getVelocity()
+        return getattr(self, '_velocity', Vec3(0, 0, 0))
 
     def setupPhysics(self):
-        self.physicsMgr = PhysicsManager()
+        # Manual velocity simulation (classic Panda3D physics not available in this build)
         self.physicsEpoch = globalClock.getFrameTime()
         self.lastPhysicsFrame = 0
-        integrator = LinearEulerIntegrator()
-        self.physicsMgr.attachLinearIntegrator(integrator)
-        fn = ForceNode('windResistance')
-        fnp = NodePath(fn)
-        fnp.reparentTo(render)
-        windResistance = LinearFrictionForce(0.2)
-        fn.addForce(windResistance)
-        self.physicsMgr.addLinearForce(windResistance)
-        self.windResistance = windResistance
-        fn = ForceNode('engine')
-        fnp = NodePath(fn)
-        fnp.reparentTo(self)
-        engine = LinearVectorForce(0, 0, 3)
-        fn.addForce(engine)
-        self.physicsMgr.addLinearForce(engine)
-        self.engine = engine
-        self.physicsMgr.attachPhysicalNode(self.node())
-        self.physicsObj = self.actorNode.getPhysicsObject()
-        ownerAv = base.cr.doId2do[self.ownerId]
+        self._windResistanceCoef = 0.2
+        self._engineVec = Vec3(0, 0, 3)
+        # Set initial velocity: inherit owner kart velocity + throw impulse
         ownerVel = self.ownerKart.getVelocity()
-        ownerSpeed = ownerVel.length()
         rotMat = Mat3.rotateMatNormaxis(self.ownerKart.getH(), Vec3.up())
         ownerHeading = rotMat.xform(Vec3.forward())
         throwSpeed = 50
         throwVel = ownerHeading * throwSpeed
         throwVelCast = Vec3(throwVel[0], throwVel[1], throwVel[2] + 50)
-        self.actorNode.getPhysicsObject().setVelocity(self.ownerKart.getVelocity() + throwVelCast)
+        self._velocity = ownerVel + throwVelCast
         lookPoint = render.getRelativePoint(self.ownerKart, Point3(0, 10, 0))
         self.lookAt(lookPoint)
         self.taskName = 'updatePhysics%s' % self.name
@@ -143,18 +129,22 @@ class Piejectile(DirectObject, FlyingGag):
             base.race.localKart.splatPie()
         self.race.effectManager.addSplatEffect(spawner=self.targetKart, parent=self.targetKart)
         taskMgr.remove(self.splatTaskName)
+        taskMgr.remove(self.taskName)
+        self.deleting = 1
         self.removeNode()
 
     def splat(self, optional = None):
         self.race.effectManager.addSplatEffect(spawner=self)
         taskMgr.remove(self.splatTaskName)
+        taskMgr.remove(self.taskName)
+        self.deleting = 1
         self.removeNode()
 
     def __updatePhysics(self, task):
-        if self.deleting:
+        if self.deleting or self.isEmpty():
             return Task.done
         self.timeRatio = (globalClock.getFrameTime() - self.startTime) / self.maxTime
-        self.windResistance.setCoef(0.2 + 0.8 * self.timeRatio)
+        self._windResistanceCoef = 0.2 + 0.8 * self.timeRatio
         if base.cr.doId2do.get(self.targetId) == None:
             self.hasTarget = 0
         self.lastD2t = self.d2t
@@ -180,11 +170,11 @@ class Piejectile(DirectObject, FlyingGag):
             targetVel = self.targetKart.getVelocity()
             targetSpeed = targetVel.length()
             if self.d2t - 10 * self.physicsDt > self.lastD2t:
-                self.engine.setVector(Vec3(0, 150 + 150 * self.timeRatio + targetSpeed * (1.0 + 1.0 * self.timeRatio) + self.d2t * (1.0 + 1.0 * self.timeRatio), 12))
+                self._engineVec = Vec3(0, 150 + 150 * self.timeRatio + targetSpeed * (1.0 + 1.0 * self.timeRatio) + self.d2t * (1.0 + 1.0 * self.timeRatio), 12)
             else:
-                self.engine.setVector(Vec3(0, 10 + 10 * self.timeRatio + targetSpeed * (0.5 + 0.5 * self.timeRatio) + self.d2t * (0.5 + 0.5 * self.timeRatio), 12))
+                self._engineVec = Vec3(0, 10 + 10 * self.timeRatio + targetSpeed * (0.5 + 0.5 * self.timeRatio) + self.d2t * (0.5 + 0.5 * self.timeRatio), 12)
         else:
-            self.engine.setVector(Vec3(0, 100, 3))
+            self._engineVec = Vec3(0, 100, 3)
         for i in range(int(numFrames)):
             pitch = self.gagNode.getP()
             self.gagNode.setP(pitch + self.rotH * self.physicsDt)
@@ -192,7 +182,13 @@ class Piejectile(DirectObject, FlyingGag):
             self.gagNode.setR(roll + self.rotP * self.physicsDt)
             heading = self.gagNode.getH()
             self.gagNode.setH(heading + self.rotR * self.physicsDt)
-            self.physicsMgr.doPhysics(self.physicsDt)
+            # Manual physics: transform engine force (local space) to world, integrate velocity
+            engineForceWorld = render.getRelativeVector(self, self._engineVec)
+            self._velocity = self._velocity + (engineForceWorld - self._velocity * self._windResistanceCoef) * self.physicsDt
+            # Update position in all axes (pie flies freely through the air)
+            self.setX(self.getX() + self._velocity.getX() * self.physicsDt)
+            self.setY(self.getY() + self._velocity.getY() * self.physicsDt)
+            self.setZ(self.getZ() + self._velocity.getZ() * self.physicsDt)
 
         if self.count % 60 == 0:
             pass
@@ -218,8 +214,11 @@ class Piejectile(DirectObject, FlyingGag):
         cRayNode.setFromCollideMask(OTPGlobals.FloorBitmask)
         cRayNode.setIntoCollideMask(BitMask32.allOff())
         self.cRayNodePath = self.attachNewNode(cRayNode)
-        self.lifter = CollisionHandlerGravity()
-        self.lifter.setGravity(32.174 * 3.0)
+        try:
+            self.lifter = CollisionHandlerGravity()
+            self.lifter.setGravity(32.174 * 3.0)
+        except NameError:
+            self.lifter = CollisionHandlerFloor()
         self.lifter.setOffset(OTPGlobals.FloorOffset)
         self.lifter.setReach(40.0)
         self.lifter.addCollider(self.cRayNodePath, self)

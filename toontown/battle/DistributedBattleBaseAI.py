@@ -75,6 +75,7 @@ class DistributedBattleBaseAI(DistributedObjectAI.DistributedObjectAI, BattleBas
         self.numNPCAttacks = 0
         self.npcAttacks = {}
         self.pets = {}
+        self.toonPetIds = {}
         self.fsm = ClassicFSM.ClassicFSM('DistributedBattleAI', [State.State('FaceOff', self.enterFaceOff, self.exitFaceOff, ['WaitForInput', 'Resume']),
          State.State('WaitForJoin', self.enterWaitForJoin, self.exitWaitForJoin, ['WaitForInput', 'Resume']),
          State.State('WaitForInput', self.enterWaitForInput, self.exitWaitForInput, ['MakeMovie', 'Resume']),
@@ -513,6 +514,8 @@ class DistributedBattleBaseAI(DistributedObjectAI.DistributedObjectAI, BattleBas
                 toon.b_setBattleId(-1)
             messageToonAdded = 'Battle adding toon %s' % avId
             messenger.send(messageToonAdded, [avId])
+            if hasattr(toon, 'getPetId'):
+                self.toonPetIds[avId] = toon.getPetId()
         if self.fsm != None and self.fsm.getCurrentState().getName() == 'PlayMovie':
             self.responses[avId] = 1
         else:
@@ -1078,8 +1081,9 @@ class DistributedBattleBaseAI(DistributedObjectAI.DistributedObjectAI, BattleBas
 
     def requestPetProxy(self, av):
         toonId = self.air.getAvatarIdFromSender()
+        print('PETPROXY requestPetProxy av=%s toonId=%s ignoreResponses=%s state=%s' % (av, toonId, self.ignoreResponses, self.fsm.getCurrentState().getName()))
         if self.ignoreResponses == 1:
-            self.notify.debug('requestPetProxy() - ignoring toon: %d' % toonId)
+            self.notify.warning('requestPetProxy() - ignoring toon: %d' % toonId)
             return
         elif self.fsm.getCurrentState().getName() != 'WaitForInput':
             self.notify.warning('requestPetProxy() - in state: %s' % self.fsm.getCurrentState().getName())
@@ -1087,28 +1091,33 @@ class DistributedBattleBaseAI(DistributedObjectAI.DistributedObjectAI, BattleBas
         elif self.activeToons.count(toonId) == 0:
             self.notify.warning('requestPetProxy() - toon: %d not in toon list' % toonId)
             return
-        self.notify.debug('requestPetProxy(%s, %s)' % (toonId, av))
         toon = self.getToon(toonId)
-        if toon == None:
-            self.notify.warning('requestPetProxy() - no toon: %d' % toonId)
+        if toon is not None:
+            petId = toon.getPetId()
+            print('PETPROXY got toon, petId=%s' % petId)
+        elif toonId in self.toonPetIds:
+            petId = self.toonPetIds[toonId]
+            print('PETPROXY toon not in doId2do, cached petId=%s' % petId)
+        else:
+            print('PETPROXY no toon and no cached petId for toonId=%s, toonPetIds=%s' % (toonId, self.toonPetIds))
             return
-        petId = toon.getPetId()
         zoneId = self.zoneId
+        print('PETPROXY petId=%s av=%s match=%s alreadyHasPet=%s' % (petId, av, petId == av, toonId in self.pets))
         if petId == av:
             if toonId not in self.pets:
 
                 def handleGetPetProxy(success, petProxy, petId = petId, zoneId = zoneId, toonId = toonId):
+                    print('PETPROXY handleGetPetProxy success=%s petProxy=%s' % (success, petProxy))
                     if success:
-                        if petId not in simbase.air.doId2do:
-                            simbase.air.requestDeleteDoId(petId)
-                        else:
+                        if petId in simbase.air.doId2do:
                             petDO = simbase.air.doId2do[petId]
                             petDO.requestDelete()
                             simbase.air.deleteDistObject(petDO)
-                        petProxy.dbObject = 1
+                        petProxy.doNotDeallocateChannel = True
                         petProxy.generateWithRequiredAndId(petId, self.air.districtId, zoneId)
                         petProxy.broadcastDominantMood()
                         self.pets[toonId] = petProxy
+                        print('PETPROXY proxy generated for petId=%s in zone=%s' % (petId, zoneId))
                     else:
                         self.notify.warning('error generating petProxy: %s' % petId)
 
@@ -1791,19 +1800,32 @@ class DistributedBattleBaseAI(DistributedObjectAI.DistributedObjectAI, BattleBas
         return None
 
     def getPetProxyObject(self, petId, callback):
-        doneEvent = 'readPet-%s' % self._getNextSerialNum()
-        dbo = DatabaseObject.DatabaseObject(self.air, petId, doneEvent=doneEvent)
-        pet = dbo.readPetProxy()
+        from toontown.pets import DistributedPetProxyAI as PetProxyModule
 
-        def handlePetProxyRead(dbo, retCode, callback = callback, pet = pet):
-            success = retCode == 0
-            if not success:
-                self.notify.warning('pet DB read failed')
-                pet = None
-            callback(success, pet)
-            return
+        def handlePetQuery(dclass, fields):
+            dclassName = dclass.getName() if dclass is not None else None
+            print('PETPROXY handlePetQuery dclassName=%s fields_keys=%s' % (dclassName, list(fields.keys()) if fields else None))
+            if dclassName not in ('DistributedPet', 'DistributedPetAI') or not fields:
+                self.notify.warning('getPetProxyObject: DB query failed for pet %s (dclassName=%s hasFields=%s)' % (petId, dclassName, bool(fields)))
+                callback(False, None)
+                return
 
-        self.acceptOnce(doneEvent, handlePetProxyRead)
+            petProxy = PetProxyModule.DistributedPetProxyAI(self.air)
+            petProxy.doId = petId
+
+            for fieldName, value in fields.items():
+                setter = getattr(petProxy, fieldName, None)
+                if callable(setter):
+                    try:
+                        setter(*value)
+                    except Exception as e:
+                        self.notify.warning('getPetProxyObject: %s(*%r) raised: %s' % (fieldName, value, e))
+
+            print('PETPROXY petProxy populated, calling callback')
+            callback(True, petProxy)
+
+        print('PETPROXY querying DB for petId=%s' % petId)
+        self.air.dbInterface.queryObject(self.air.dbId, petId, handlePetQuery)
 
     def _getNextSerialNum(self):
         num = self.serialNum

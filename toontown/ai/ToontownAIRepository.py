@@ -59,10 +59,15 @@ from toontown.tutorial.TutorialManagerAI import TutorialManagerAI
 # Catalogs.
 from toontown.catalog.CatalogManagerAI import CatalogManagerAI
 
+# Pets!
+if config.ConfigVariableBool('want-pets', True).getValue():
+    from toontown.pets.PetManagerAI import PetManagerAI
+
 # Magic Words!
 from panda3d.core import PStatClient
 from otp.ai.MagicWordGlobal import *
 import otp.ai.DiagnosticMagicWords
+import toontown.building.BuildingMagicWords
 
 # ToonFest!
 if config.ConfigVariableBool('want-toonfest', False).getValue():
@@ -102,6 +107,9 @@ class ToontownAIRepository(ToontownInternalRepository):
         self.promotionMgr = PromotionManagerAI(self)
         self.cogSuitMgr = CogSuitManagerAI(self)
         self.suitInvasionManager = SuitInvasionManagerAI(self)
+
+        if simbase.wantPets:
+            self.petMgr = PetManagerAI(self)
 
         self.statusSender = ShardStatusSender(self)
 

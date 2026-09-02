@@ -3,9 +3,9 @@
 # as well as deployment/server.prc if necessary.
 
 # Client settings
-window-title Toontown Rewritten [DEV BUILD]
-server-version ttroff-beta-v2.12.2
-sync-video #f
+window-title Toontown Porkheffley [DEV]
+server-version ttph-v2.0.0
+sync-video #t
 want-dev #f
 preload-avatars #t
 texture-anisotropic-degree 16
@@ -15,8 +15,8 @@ default-directnotify-level info
 
 
 # New Addons!
-want-WASD #t
-tt-framerate #t
+want-WASD #f
+tt-framerate #f
 want-new-toonhall #t
 want-max-font #t
 want-ttc-television #f
@@ -36,12 +36,13 @@ vfs-mount resources/phase_10 /phase_10
 vfs-mount resources/phase_11 /phase_11
 vfs-mount resources/phase_12 /phase_12
 vfs-mount resources/phase_13 /phase_13
+vfs-mount resources/custom /custom
 model-path /
 default-model-extension .bam
 
 
 # DC Files
-dc-file config/ttroff.dc
+dc-file config/ttph.dc
 
 
 # Server settings
@@ -58,7 +59,7 @@ mongodb-url mongodb://127.0.0.1/astron
 want-pets #t
 want-news-tab #f
 want-news-page #f
-want-accessories #f
+want-accessories #t
 want-parties #t
 want-gardening #t
 want-gifting #f
@@ -70,14 +71,14 @@ want-keep-alive #f
 
 # Developer Modifications
 # A few fun things for our developer build. These shouldn't go in public_client.
-estate-day-night #t
+estate-day-night #f
 want-instant-parties #t
 show-total-population #f
 want-toontorial #f
 
 
 # Chat stuff
-want-whitelist #f
+want-whitelist #t
 want-blacklist-sequence #f
 force-avatar-understandable #t
 force-player-understandable #t
@@ -91,5 +92,6 @@ mega-invasion-cog-type tm
 
 
 # Working (Custom) Addons!
-want-toonfest #t
+want-cogdominiums #t
+want-toonfest #f
 want-doomsday #f

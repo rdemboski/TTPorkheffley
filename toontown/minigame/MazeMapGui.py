@@ -1,7 +1,8 @@
 from enum import Enum
 #from direct.showbase.PythonUtil import Enum
 from direct.gui.DirectGui import DirectFrame, DGG
-from panda3d.core import Vec2, VBase4D
+from panda3d.core import Vec2, LVecBase4f as VBase4F
+VBase4D = VBase4F  # legacy alias; PNMImage.setXelA requires single-precision
 from panda3d.core import CardMaker, NodePath
 from panda3d.core import Texture, PNMImage
 DEFAULT_MASK_RESOLUTION = 32

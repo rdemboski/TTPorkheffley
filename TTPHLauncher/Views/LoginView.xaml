@@ -1,0 +1,108 @@
+<UserControl x:Class="TTPHLauncher.Views.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>     <!-- Left: logo / splash area -->
+            <ColumnDefinition Width="320"/>   <!-- Right: login form panel -->
+        </Grid.ColumnDefinitions>
+
+        <!-- ================================================================
+             LEFT — logo / splash area
+        ================================================================ -->
+        <Grid Grid.Column="0" Margin="44,0,20,0">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Toontown"
+                           Foreground="{StaticResource BrushAccent}"
+                           FontSize="40"
+                           FontWeight="Black"/>
+                <TextBlock Text="Porkheffley"
+                           Foreground="{StaticResource BrushTextPrimary}"
+                           FontSize="32"
+                           FontWeight="Light"
+                           Margin="0,-6,0,20"/>
+                <TextBlock TextWrapping="Wrap"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           FontSize="13"
+                           LineHeight="22"
+                           MaxWidth="280">
+                    A custom Toontown private server.
+                    Sign in to enter the Tooniverse.
+                </TextBlock>
+            </StackPanel>
+        </Grid>
+
+        <!-- ================================================================
+             RIGHT — login form
+        ================================================================ -->
+        <Border Grid.Column="1"
+                Background="{StaticResource BrushSurface}"
+                Padding="36,44">
+
+            <StackPanel VerticalAlignment="Center">
+
+                <TextBlock Text="Welcome back"
+                           Foreground="{StaticResource BrushTextPrimary}"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,28"/>
+
+                <!-- Username -->
+                <TextBlock Text="USERNAME" Style="{StaticResource Label}"/>
+                <TextBox x:Name="UsernameBox"
+                         Style="{StaticResource InputBox}"
+                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,16"/>
+
+                <!-- Password — PasswordBox does not support two-way binding;
+                     the PasswordChanged handler in code-behind calls SetPassword(). -->
+                <TextBlock Text="PASSWORD" Style="{StaticResource Label}"/>
+                <PasswordBox x:Name="PasswordBox"
+                             Style="{StaticResource InputPassword}"
+                             PasswordChanged="PasswordBox_PasswordChanged"
+                             Margin="0,0,0,24"/>
+
+                <!-- Error / status message -->
+                <TextBlock Text="{Binding StatusMessage}"
+                           Foreground="{StaticResource BrushError}"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,12"
+                           Visibility="{Binding IsError, Converter={StaticResource BoolToVis}}"/>
+
+                <!-- Sign In button — label changes while busy -->
+                <Button Style="{StaticResource PrimaryButton}"
+                        Command="{Binding LoginCommand}">
+                    <TextBlock>
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="Sign In"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                        <Setter Property="Text" Value="Signing in…"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Button>
+
+                <!-- Register link -->
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,18,0,0">
+                    <TextBlock Text="New to Porkheffley?  "
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               FontSize="13"
+                               VerticalAlignment="Center"/>
+                    <Button Content="Create an account"
+                            Style="{StaticResource GhostButton}"
+                            Command="{Binding GoToRegisterCommand}"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+    </Grid>
+</UserControl>

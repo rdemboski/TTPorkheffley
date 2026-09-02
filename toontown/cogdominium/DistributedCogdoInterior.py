@@ -21,6 +21,8 @@ from toontown.distributed import DelayDelete
 from toontown.toonbase import TTLocalizer
 from .CogdoExecutiveSuiteMovies import CogdoExecutiveSuiteIntro
 from .CogdoElevatorMovie import CogdoElevatorMovie
+from . import CogdoUtil
+from otp.nametag.NametagConstants import CFSpeech, CFThought
 PAINTING_DICT = {'s': 'tt_m_ara_crg_paintingMoverShaker',
  'l': 'tt_m_ara_crg_paintingLegalEagle',
  'm': 'tt_m_ara_crg_paintingMoverShaker',
@@ -79,7 +81,7 @@ class DistributedCogdoInterior(DistributedObject.DistributedObject):
         self.waitMusic = base.loader.loadMusic('phase_7/audio/bgm/encntr_toon_winning_indoor.ogg')
         self.elevatorMusic = base.loader.loadMusic('phase_7/audio/bgm/tt_elevator.ogg')
         self.fsm = ClassicFSM.ClassicFSM('DistributedCogdoInterior', [State.State('WaitForAllToonsInside', self.enterWaitForAllToonsInside, self.exitWaitForAllToonsInside, ['Elevator']),
-         State.State('Elevator', self.enterElevator, self.exitElevator, ['Game']),
+         State.State('Elevator', self.enterElevator, self.exitElevator, ['Game', 'BattleIntro', 'Resting', 'Failed']),
          State.State('Game', self.enterGame, self.exitGame, ['Resting', 'Failed', 'BattleIntro']),
          State.State('BarrelRoomIntro', self.enterBarrelRoomIntro, self.exitBarrelRoomIntro, ['CollectBarrels', 'Off']),
          State.State('CollectBarrels', self.enterCollectBarrels, self.exitCollectBarrels, ['BarrelRoomReward', 'Off']),
@@ -112,7 +114,9 @@ class DistributedCogdoInterior(DistributedObject.DistributedObject):
         self.shopOwnerNpcId = npcId
 
     def setSOSNpcId(self, npcId):
-        self.SOSToonName = NPCToons.getNPCName(npcId)
+        name = NPCToons.getNPCName(npcId) if npcId else None
+        # Fall back to a generic placeholder so the dialogue never shows "None".
+        self.SOSToonName = name if name else 'your friend'
 
     def setFOType(self, typeId):
         self.FOType = chr(typeId)
@@ -300,6 +304,16 @@ class DistributedCogdoInterior(DistributedObject.DistributedObject):
 
     def setToons(self, toonIds, hack):
         self.toonIds = toonIds
+        # If any toon DOs haven't generated on this client yet, request them
+        # and retry once they're available.  This prevents the race condition
+        # where a client enters the interior before a fellow toon's avatar has
+        # been distributed, leaving toonId2Player incomplete in the maze game.
+        missing = [tid for tid in toonIds if tid != 0 and tid not in self.cr.doId2do]
+        if missing:
+            self.notify.debug('setToons() - requesting missing toons: %s' % missing)
+            self.cr.relatedObjectMgr.requestObjects(
+                missing,
+                allCallback=lambda objs: self.setToons(toonIds, hack))
         oldtoons = self.toons
         self.toons = []
         for toonId in toonIds:
@@ -397,6 +411,11 @@ class DistributedCogdoInterior(DistributedObject.DistributedObject):
 
     def exitGame(self):
         base.cr.forbidCheesyEffects(0)
+        # Remove the level preview that was loaded in __playElevator; the
+        # real maze geometry is now visible (or the game is ending).
+        if self.floorModel is not None:
+            self.floorModel.removeNode()
+            self.floorModel = None
 
     def __playElevator(self, ts, name, callback):
         SuitHs = []
@@ -459,10 +478,32 @@ class DistributedCogdoInterior(DistributedObject.DistributedObject):
             elevOut = elevOut.copyTo(render)
             elevOut.setY(render, y - 0.75)
         else:
-            floorModel = loader.loadModel('phase_7/models/modules/boss_suit_office')
-            elevIn = floorModel.find('**/elevator-in').copyTo(render)
-            elevOut = floorModel.find('**/elevator-out').copyTo(render)
-            floorModel.removeNode()
+            # Use a plain container as floorModel so all existing cleanup
+            # paths (floorModel.removeNode()) still work unchanged.
+            self.floorModel = render.attachNewNode('maze_preview')
+            # Load the level model only for its elevator/exit node positions;
+            # stash it immediately so the large model is never rendered.
+            _levelGeom = CogdoUtil.loadMazeModel('level')
+            _levelGeom.reparentTo(self.floorModel)
+            _levelGeom.stash()
+            elevIn = _levelGeom.find('**/elevator_loc').copyTo(render)
+            # elevator_loc is H=0 (north-facing) in the model, but the
+            # entrance elevator should face south (toward the exterior) so the
+            # toon exits heading north into the maze and the elevator camera
+            # looks north through the open doors into the office.
+            elevIn.setH(render, 180)
+            elevOut = _levelGeom.find('**/exit_loc').copyTo(render)
+            # Visible preview: one office quadrant.  With the heading fixed,
+            # the camera is at world y≈-88.5 facing north (inside the
+            # elevator, looking out).  The elevator entrance is at y≈-74.5.
+            # Center the quadrant at y=-48 → south face at y=-73.5 (≈1 unit
+            # north of the elevator doors) so the elevator model no longer
+            # clips into the quadrant walls.  North face is at y=-22.5,
+            # giving ~52 units of visible office depth through the doors.
+            _prevQuad = CogdoUtil.loadMazeModel('quadrant1')
+            _prevQuad.reparentTo(self.floorModel)
+            _prevQuad.setColorScale(3, 3, 3, 1)
+            _prevQuad.setPos(0, -48, 0)
         self.elevIn = elevIn
         self.elevOut = elevOut
         self._haveEntranceElevator.set(True)
@@ -600,6 +641,10 @@ class DistributedCogdoInterior(DistributedObject.DistributedObject):
             self.barrelRoom.hideRewardUi()
 
     def enterBattleIntro(self, ts = 0):
+        if not self.shopOwnerNpc:
+            # Safety net: shopOwnerNpc should have been created by the elevator
+            # ride that precedes BattleIntro, but create it now if somehow missed.
+            self.__makeShopOwnerNpc()
         self._movie = CogdoExecutiveSuiteIntro(self.shopOwnerNpc)
         self._movie.load()
         self._movie.play()
@@ -706,21 +751,30 @@ class DistributedCogdoInterior(DistributedObject.DistributedObject):
         return
 
     def enterFailed(self, ts = 0):
-        self.exitCogdoBuilding()
+        self._cogdoExitSent = False
+        # Use teleportIn so the street place does not wait for a
+        # waitForVictorsFromCogdo elevator event that will never fire
+        # (the building stays in cogdo state on failure).
+        self.exitCogdoBuilding(how='teleportIn')
         return None
 
     def exitFailed(self):
         self.notify.debug('exitFailed()')
-        self.exitCogdoBuilding()
+        # exitCogdoBuilding already sent in enterFailed; no-op here to avoid double-send
         return None
 
-    def exitCogdoBuilding(self):
+    def exitCogdoBuilding(self, how='elevatorIn'):
         if base.localAvatar.hp < 0:
             return
+        # Guard against double-send (enterFailed and exitFailed both reach here
+        # in the original code; only the first call should fire DSIDoneEvent).
+        if getattr(self, '_cogdoExitSent', False):
+            return
+        self._cogdoExitSent = True
         base.localAvatar.b_setParent(ToontownGlobals.SPHidden)
         request = {'loader': ZoneUtil.getBranchLoaderName(self.extZoneId),
          'where': ZoneUtil.getToonWhereName(self.extZoneId),
-         'how': 'elevatorIn',
+         'how': how,
          'hoodId': ZoneUtil.getHoodId(self.extZoneId),
          'zoneId': self.extZoneId,
          'shardId': None,

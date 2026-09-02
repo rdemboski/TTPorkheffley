@@ -7,6 +7,10 @@ from .PartyGlobals import *
 from datetime import datetime, timedelta
 from panda3d.core import *
 
+def _enumInt(v):
+    """Convert an Enum member to a plain int for DC wire packing."""
+    return v.value if hasattr(v, 'value') else int(v)
+
 class GlobalPartyManagerUD(DistributedObjectGlobalUD):
     notify = directNotify.newCategory('GlobalPartyManagerUD')
 
@@ -108,7 +112,7 @@ class GlobalPartyManagerUD(DistributedObjectGlobalUD):
                 partyDict['inviteTheme'],
                 partyDict['activities'],
                 partyDict['decorations'],
-                partyDict.get('status', PartyStatus.Pending)]
+                _enumInt(partyDict.get('status', PartyStatus.Pending))]
 
     # Avatar joined the game, invoked by the CSMUD
     def avatarJoined(self, avId, friendsList): # CSMUD also passes friendsList for TTRFMUD.
@@ -189,10 +193,10 @@ class GlobalPartyManagerUD(DistributedObjectGlobalUD):
             if self.id2Party != {}:
                 # Sorry, one party at a time
                 print(self.id2Party)
-                self.sendToAI('addPartyResponseUdToAi', [partyId, AddPartyErrorCode.TooManyHostedParties, self._formatParty(self.id2Party[partyId])])
+                self.sendToAI('addPartyResponseUdToAi', [partyId, _enumInt(AddPartyErrorCode.TooManyHostedParties), self._formatParty(self.id2Party[partyId])])
         self.id2Party[partyId] = {'partyId': partyId, 'hostId': avId, 'start': startTime, 'end': endTime, 'isPrivate': isPrivate, 'inviteTheme': inviteTheme, 'activities': activities, 'decorations': decorations, 'inviteeIds': inviteeIds, 'status': PartyStatus.Pending}
         self.host2PartyId[avId] = partyId
-        self.sendToAI('addPartyResponseUdToAi', [partyId, AddPartyErrorCode.AllOk, self._formatParty(self.id2Party[partyId])])
+        self.sendToAI('addPartyResponseUdToAi', [partyId, _enumInt(AddPartyErrorCode.AllOk), self._formatParty(self.id2Party[partyId])])
         if self.wantInstantParties:
             taskMgr.remove('GlobalPartyManager_checkStarts')
             taskMgr.doMethodLater(15, self.__checkPartyStarts, 'GlobalPartyManager_checkStarts')

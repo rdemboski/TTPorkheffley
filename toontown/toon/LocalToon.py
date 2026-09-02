@@ -54,6 +54,7 @@ from toontown.toon import ToonDNA
 from . import DistributedToon
 from . import Toon
 from . import LaffMeter
+from . import CustomModelPanel
 from toontown.quest import QuestMap
 from toontown.toon.DistributedNPCToonBase import DistributedNPCToonBase
 WantNewsPage = config.ConfigVariableBool('want-news-page', ToontownGlobals.DefaultWantNewsPageSetting).getValue()
@@ -269,6 +270,8 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         del self.laffMeter
         self.questMap.destroy()
         self.questMap = None
+        self.customModelPanel.destroy()
+        del self.customModelPanel
         if hasattr(self, 'purchaseButton'):
             self.purchaseButton.destroy()
             del self.purchaseButton
@@ -397,6 +400,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.laffMeter.stop()
         self.questMap = QuestMap.QuestMap(self)
         self.questMap.stop()
+        self.customModelPanel = CustomModelPanel.CustomModelPanel()
         if not base.cr.isPaid():
             guiButton = loader.loadModel('phase_3/models/gui/quit_button')
             self.purchaseButton = DirectButton(parent=aspect2d, relief=None, image=(guiButton.find('**/QuitBtn_UP'), guiButton.find('**/QuitBtn_DN'), guiButton.find('**/QuitBtn_RLVR')), image_scale=0.9, text=TTLocalizer.OptionsPagePurchase, text_scale=0.05, text_pos=(0, -0.01), textMayChange=0, pos=(0.885, 0, -0.94), sortOrder=100, command=self.__handlePurchase)
@@ -1311,13 +1315,13 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.gotCatalogNotify = 0
         currentWeek = self.catalogScheduleCurrentWeek - 1
         if currentWeek < 57:
-            seriesNumber = currentWeek / ToontownGlobals.CatalogNumWeeksPerSeries + 1
+            seriesNumber = currentWeek // ToontownGlobals.CatalogNumWeeksPerSeries + 1
             weekNumber = currentWeek % ToontownGlobals.CatalogNumWeeksPerSeries + 1
         elif currentWeek < 65:
             seriesNumber = 6
             weekNumber = currentWeek - 56
         else:
-            seriesNumber = currentWeek / ToontownGlobals.CatalogNumWeeksPerSeries + 2
+            seriesNumber = currentWeek // ToontownGlobals.CatalogNumWeeksPerSeries + 2
             weekNumber = currentWeek % ToontownGlobals.CatalogNumWeeksPerSeries + 1
         message = None
         if self.mailboxNotify == ToontownGlobals.NoItems:
@@ -2054,6 +2058,10 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
 
     def _stopZombieCheck(self):
         pass
+    
+    def requestCustomModel(self, modelId):
+        self.sendUpdate('setCustomModel', [modelId]) # broadcast to others
+        self.setCustomModel(modelId) # apply locally
 
     # KeepAlive stuff
     def keepAliveCheck(self):

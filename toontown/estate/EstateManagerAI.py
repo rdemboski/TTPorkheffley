@@ -263,6 +263,20 @@ class EstateManagerAI(DistributedObjectAI):
         self.toon2estate = {}
         self.estate2timeout = {}
 
+    def getOwnerFromZone(self, zoneId):
+        """Return the doId of the toon that owns the estate in zoneId, or None."""
+        for toon, estate in list(self.toon2estate.items()):
+            if estate.zoneId == zoneId and getattr(estate, 'owner', None) is toon:
+                return toon.doId
+        return None
+
+    def getEstateZones(self, ownerId):
+        """Return a list of zone IDs associated with the owner's estate."""
+        av = self.air.doId2do.get(ownerId)
+        if av and getattr(av, 'estate', None):
+            return [av.estate.zoneId]
+        return []
+
     def getEstateZone(self, avId):
         senderId = self.air.getAvatarIdFromSender()
         accId = self.air.getAccountIdFromSender()
@@ -283,6 +297,7 @@ class EstateManagerAI(DistributedObjectAI):
                     avId = estate.owner.doId
                     zoneId = estate.zoneId
                     self._mapToEstate(toon, estate)
+                    self._activatePetInEstate(toon, estate)
                     self._unloadEstate(toon) # In case they're doing estate->estate TP.
                     self.sendUpdateToAvatarId(senderId, 'setEstateZone', [avId, zoneId])
 
@@ -296,6 +311,7 @@ class EstateManagerAI(DistributedObjectAI):
         if estate:
             # They already have an estate loaded, so let's just return it:
             self._mapToEstate(toon, toon.estate)
+            self._activatePetInEstate(toon, toon.estate)
             self.sendUpdateToAvatarId(senderId, 'setEstateZone', [senderId, estate.zoneId])
 
             # If a timeout == active, cancel it:
@@ -319,6 +335,21 @@ class EstateManagerAI(DistributedObjectAI):
                 toon.estate.owner = toon
                 self._mapToEstate(toon, toon.estate)
                 self.sendUpdateToAvatarId(senderId, 'setEstateZone', [senderId, zoneId])
+                # Activate pets for all account toons (including offline ones).
+                if getattr(simbase, 'wantPets', False):
+                    toon.estate.offlinePetIds = []
+                    for toonFields in toon.loadEstateFSM.toons.values():
+                        if toonFields is None:
+                            continue
+                        petId = toonFields.get('setPetId', [0])[0]
+                        if petId and not self.air.doId2do.get(petId):
+                            self.air.sendActivate(
+                                petId,
+                                self.air.districtId,
+                                zoneId,
+                                self.air.dclassesByName['DistributedPetAI'],
+                                {})
+                            toon.estate.offlinePetIds.append(petId)
             else:
                 # Estate loading failed??!
                 self.sendUpdateToAvatarId(senderId, 'setEstateZone', [0, 0])
@@ -365,6 +396,20 @@ class EstateManagerAI(DistributedObjectAI):
         # Boot all Toons from estate:
         self._sendToonsToPlayground(estate, 1)
 
+        # Deactivate pets of all toons still in the estate (online visitors/owner).
+        if getattr(simbase, 'wantPets', False):
+            for toon in self.estate2toons.get(estate, []):
+                petId = toon.getPetId()
+                if petId:
+                    pet = self.air.doId2do.get(petId)
+                    if pet:
+                        pet.requestDelete()
+            # Also deactivate offline account toons' pets that were activated at load time.
+            for petId in getattr(estate, 'offlinePetIds', []):
+                pet = self.air.doId2do.get(petId)
+                if pet:
+                    pet.requestDelete()
+
         # Clean up toon<->estate mappings...
         for toon in self.estate2toons.get(estate, []):
             try:
@@ -401,12 +446,38 @@ class EstateManagerAI(DistributedObjectAI):
     def _unmapFromEstate(self, toon):
         estate = self.toon2estate.get(toon)
         if not estate: return
+
+        # Deactivate visitor's pet when they leave. The estate owner's pet
+        # is deactivated by _cleanupEstate when the estate itself shuts down.
+        owner = getattr(estate, 'owner', None)
+        if toon != owner and getattr(simbase, 'wantPets', False):
+            petId = toon.getPetId()
+            if petId:
+                pet = self.air.doId2do.get(petId)
+                if pet:
+                    pet.requestDelete()
+
         del self.toon2estate[toon]
 
         try:
             self.estate2toons[estate].remove(toon)
         except (KeyError, ValueError):
             pass
+
+    def _activatePetInEstate(self, toon, estate):
+        if not getattr(simbase, 'wantPets', False):
+            return
+        petId = toon.getPetId()
+        if not petId:
+            return
+        if self.air.doId2do.get(petId):
+            return  # already active
+        self.air.sendActivate(
+            petId,
+            self.air.districtId,
+            estate.zoneId,
+            self.air.dclassesByName['DistributedPetAI'],
+            {})
 
     def _lookupEstate(self, toon):
         return self.toon2estate.get(toon)

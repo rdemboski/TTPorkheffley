@@ -1,0 +1,6 @@
+{
+  "ApiBaseUrl": "https://ttph.azurewebsites.net",
+  "CdnBaseUrl": "https://ttphcdn.blob.core.windows.net/resources",
+  "GameDirectory": "game",
+  "GameExecutable": "TTPHEngine.exe"
+}

@@ -97,7 +97,7 @@ class DistributedSafezoneInvasion(DistributedObject):
         self.confirm.cleanup()
         del self.confirm
         if status == 'ok':
-            webbrowser.open('http://toontownrewritten.com')
+            webbrowser.open('http://toontownporkheffley.com')
             abort()
 
     def __localPieSplat(self, pieCode, entry):

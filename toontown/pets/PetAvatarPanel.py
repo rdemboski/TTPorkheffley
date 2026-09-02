@@ -33,8 +33,7 @@ class PetAvatarPanel(AvatarPanel.AvatarPanel):
         base.panel = self
         gui = loader.loadModel('phase_3.5/models/gui/PetControlPannel')
         guiScale = 0.116
-        guiPos = (1.12, 0, 0.3)
-        self.frame = DirectFrame(parent=aspect2dp, image=gui, scale=guiScale, pos=guiPos, relief=None)
+        self.frame = DirectFrame(parent=base.a2dTopRight, image=gui, scale=guiScale, pos=(-0.22, 0, -0.7), relief=None)
         disabledImageColor = Vec4(0.6, 0.6, 0.6, 1)
         text0Color = Vec4(1, 1, 1, 1)
         text1Color = Vec4(0.5, 1, 0.5, 1)
@@ -184,7 +183,6 @@ class PetAvatarPanel(AvatarPanel.AvatarPanel):
     def disableAll(self):
         self.disableInteractionButtons()
         self.ownerButton['state'] = DGG.DISABLED
-        self.closeButton['state'] = DGG.DISABLED
         self.detailButton['state'] = DGG.DISABLED
 
     def __handleDetailDone(self):

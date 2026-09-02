@@ -1,5 +1,5 @@
 @echo off
-title Toontown Rewritten UberDOG Service
+title Toontown Porkheffley UberDOG Service
 cd ../../
 
 rem Read the contents of PPYTHON_PATH into %PPYTHON_PATH%:

@@ -436,6 +436,7 @@ class ChatManager(DirectObject.DirectObject):
 
     def exitNormalChat(self):
         self.chatInputNormal.deactivate()
+        base.localAvatar.enableAvatarControls()
 
     def enterOpenChatWarning(self):
         self.notify.error('called enterOpenChatWarning() on parent class')

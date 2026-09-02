@@ -50,7 +50,9 @@ class ToonBase(OTPBase.OTPBase):
         self.camLens.setMinFov(ToontownGlobals.DefaultCameraFov/(4./3.))
         self.camLens.setNearFar(ToontownGlobals.DefaultCameraNear, ToontownGlobals.DefaultCameraFar)
         self.cam2d.node().setCameraMask(BitMask32.bit(1))
-        self.musicManager.setVolume(0.65)
+        self.musicManager.setVolume(self.display.settings.getInt('game', 'music-vol', 100) / 100.0)
+        for mgr in self.sfxManagerList:
+            mgr.setVolume(self.display.settings.getInt('game', 'sfx-vol', 100) / 100.0)
         self.setBackgroundColor(ToontownGlobals.DefaultBackgroundColor)
         tpm = TextPropertiesManager.getGlobalPtr()
         candidateActive = TextProperties()
@@ -211,17 +213,28 @@ class ToonBase(OTPBase.OTPBase):
         searchPath = DSearchPath()
         searchPath.appendDirectory(Filename('/phase_3/etc'))
 
-        for filename in ['toonmono.cur', 'icon.ico']:
+        # Support both animated (.ani) and static (.cur) cursors.
+        cursorFile = None
+        for candidate in ['cursor.ani', 'cursor.cur', 'toonmono.cur']:
+            p3filename = Filename(candidate)
+            if vfs.resolveFilename(p3filename, searchPath):
+                cursorFile = candidate
+                break
+
+        if cursorFile is None:
+            return
+
+        for filename in [cursorFile, 'icon.ico']:
             p3filename = Filename(filename)
             found = vfs.resolveFilename(p3filename, searchPath)
             if not found:
-                return # Can't do anything past this point.
+                return
 
             with open(os.path.join(tempdir, filename), 'wb') as f:
                 f.write(vfs.readFile(p3filename, False))
 
         wp = WindowProperties()
-        wp.setCursorFilename(Filename.fromOsSpecific(os.path.join(tempdir, 'toonmono.cur')))
+        wp.setCursorFilename(Filename.fromOsSpecific(os.path.join(tempdir, cursorFile)))
         wp.setIconFilename(Filename.fromOsSpecific(os.path.join(tempdir, 'icon.ico')))
         self.win.requestProperties(wp)
 

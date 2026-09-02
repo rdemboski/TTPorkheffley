@@ -255,11 +255,12 @@ class CatalogItem:
     def getHashContents(self):
         return None
 
-    def __cmp__(self, other):
-        c = cmp(self.__class__, other.__class__)
-        if c != 0:
-            return c
-        return self.compareTo(other)
+    def __eq__(self, other):
+        if not isinstance(other, CatalogItem):
+            return NotImplemented
+        if self.__class__ != other.__class__:
+            return False
+        return self.compareTo(other) == 0
 
     def __hash__(self):
         return hash((self.__class__, self.getHashContents()))
